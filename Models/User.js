@@ -23,13 +23,14 @@ const userSchema = new mongoose.Schema({
     enum: ["Acheteur", "Vendeur", "Expert", "Administrateur"],
   },
   Verified: {
-      type: Boolean , 
-      default: false},
-      
-  Verified_code : {
-    type: Number,
-    default:false  }
+    type: Boolean,
+    default: false,
+  },
 
+  Verified_code: {
+    type: Number,
+    default: false,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema, "user");

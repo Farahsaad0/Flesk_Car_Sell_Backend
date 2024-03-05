@@ -9,6 +9,8 @@ const FullLayout = lazy(() => import("../layouts/FullLayout.js"));
 const Starter = lazy(() => import("../views/Starter.js"));
 const About = lazy(() => import("../views/About.js"));
 const Alerts = lazy(() => import("../views/ui/Alerts"));
+const Users = lazy(() => import("../views/ui/Users"));
+const ExpertsSubs = lazy(() => import("../views/ui/ExpertsSubs"));
 const Badges = lazy(() => import("../views/ui/Badges"));
 const Buttons = lazy(() => import("../views/ui/Buttons"));
 const Cards = lazy(() => import("../views/ui/Cards"));
@@ -28,6 +30,8 @@ const ThemeRoutes = [
       { path: "/starter", exact: true, element: <Starter /> },
       { path: "/about", exact: true, element: <About /> },
       { path: "/alerts", exact: true, element: <Alerts /> },
+      { path: "/users", exact: true, element: <Users /> },
+      { path: "/experts_subs", exact: true, element: <ExpertsSubs /> },
       { path: "/badges", exact: true, element: <Badges /> },
       { path: "/buttons", exact: true, element: <Buttons /> },
       { path: "/cards", exact: true, element: <Cards /> },

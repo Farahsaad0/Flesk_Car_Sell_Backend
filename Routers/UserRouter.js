@@ -4,6 +4,7 @@ const User = require("../Models/User");
 const { generateLogToken } = require("../utils");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
+
 // Route de création d'utilisateur
 let register = async (req, res) => {
   try {
@@ -33,8 +34,8 @@ let register = async (req, res) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000); // Génère un nombre aléatoire à 6 chiffres
 
     // Enregistrer le code de vérification dans la base de données pour l'utilisateur nouvellement créé
-    // newUser.Verified_code = verificationCode;
-    // await newUser.save();
+    newUser.Verified_code = verificationCode;
+    await newUser.save();
 
     // Envoyer le code de vérification par e-mail
     await sendVerificationEmail(newUser.Email, verificationCode);
@@ -130,4 +131,56 @@ let login = async (req, res) => {
   }
 };
 
-module.exports = { login, register, verifyRouteHandler };
+let getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
+    const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
+
+    const totalUsers = await User.countDocuments(); // Count total number of users
+    const totalPages = Math.ceil(totalUsers / perPage); // Calculate total number of pages
+
+    const users = await User.find()
+      .skip((page - 1) * perPage) // Skip users based on the current page number and items per page
+      .limit(perPage); // Limit the number of users returned per page
+
+    res.status(200).json({ users, totalPages }); // Return users data along with total number of pages
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Error fetching users: " + error });
+  }
+};
+
+let getPendingExperts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
+    const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
+
+    const totalExperts = await User.countDocuments({ Verified: false }); // Count total number of pending experts
+    const totalPages = Math.ceil(totalExperts / perPage); // Calculate total number of pages
+
+    const pendingExperts = await User.find({ Verified: false })
+      .skip((page - 1) * perPage) // Skip experts based on the current page number and items per page
+      .limit(perPage); // Limit the number of experts returned per page
+
+    res.status(200).json({ pendingExperts, totalPages }); // Send pending experts and total pages in the response
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des experts en attente :",
+      error
+    );
+    res
+      .status(500)
+      .json({
+        error:
+          "Erreur lors de la récupération des experts en attente : " + error,
+      });
+  }
+};
+
+module.exports = {
+  login,
+  register,
+  verifyRouteHandler,
+  getAllUsers,
+  getPendingExperts,
+};

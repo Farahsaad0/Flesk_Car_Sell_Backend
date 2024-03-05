@@ -14,6 +14,16 @@ const navigation = [
     icon: "bi bi-bell",
   },
   {
+    title: "Etulisateurs",
+    href: "/users",
+    icon: "bi bi-people",
+  },
+  {
+    title: "Demondes",
+    href: "/experts_subs",
+    icon: "bi bi-envelope-paper",
+  },
+  {
     title: "Badges",
     href: "/badges",
     icon: "bi bi-patch-check",
@@ -66,12 +76,12 @@ const Sidebar = () => {
       <div className="d-flex align-items-center">
         <Logo />
         <span className="ms-auto d-lg-none">
-        <Button
-          close
-          size="sm"
-          className="ms-auto d-lg-none"
-          onClick={() => showMobilemenu()}
-        ></Button>
+          <Button
+            close
+            size="sm"
+            className="ms-auto d-lg-none"
+            onClick={() => showMobilemenu()}
+          ></Button>
         </span>
       </div>
       <div className="pt-4 mt-2">
