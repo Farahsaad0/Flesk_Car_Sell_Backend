@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Importer useNavigate
 import VerificationPage from "./verificationPage";
 import styles from "./styles.module.css";
 
@@ -15,6 +15,7 @@ const Signup = () => {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [isRegistered, setIsRegistered] = useState(false);
+  const navigate = useNavigate(); // Utiliser useNavigate pour la navigation
 
   const handleChange = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
@@ -25,8 +26,13 @@ const Signup = () => {
     try {
       const url = "http://localhost:8000/register";
       const { data: res } = await axios.post(url, data);
-      setIsRegistered(true); // Définir l'état de la validation sur true
-      setMsg(res.message);
+      
+      if (data.Role === "Expert") {
+        setMsg("Votre compte est en attente d'approbation par l'administrateur.");
+      } else {
+        setIsRegistered(true); // Définir l'état de la validation sur true
+        setMsg(res.message);
+      }
     } catch (error) {
       if (
         error.response &&
@@ -43,7 +49,7 @@ const Signup = () => {
       {isRegistered ? (
         <VerificationPage
           email={data.Email}
-          onSuccess={() => setIsRegistered(false)}
+          onSuccess={() => navigate("/login")} // Utiliser navigate pour la navigation
         />
       ) : (
         <div className={styles.signup_form_container}>

@@ -29,8 +29,14 @@ const userSchema = new mongoose.Schema({
 
   Verified_code: {
     type: Number,
-    default: false,
-  },
+    default:false  },
+
+    Statut: {
+      type: String,
+      enum: ["En attente", "Approuvé", "Rejeté"],
+      default: "En attente"
+    }
+
 });
 
 module.exports = mongoose.model("User", userSchema, "user");

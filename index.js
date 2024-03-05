@@ -4,6 +4,8 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const userController = require("./Routers/UserRouter"); // Update import paths
 const carAdController = require("./Routers/CarAdRoute"); // Update import paths
+const expertController = require("././Routers/ExpertRoute");
+
 const cors = require("cors");
 dotenv.config();
 app.use(express.json());
@@ -36,6 +38,16 @@ app.put("/carAds/:id", carAdController.updateCarAd);
 app.delete("/carAds/:id", carAdController.deleteCarAd);
 app.get("/carAds/:id", carAdController.getCarAdById);
 app.get("/carAds/search", carAdController.searchCarAds);
+app.put("/:id/specialite", expertController.updateSpecialite);
+app.get("/experts", expertController.getAllExperts);
+
+app.put("/:id/bloquer", expertController.bloquerExpert);
+
+app.put("/:id/approuver", expertController.approuverExpert);
+
+app.put("/:id", expertController.updateExpert);
+
+app.delete("/:id",expertController. deleteExpert);
 
 app.get("/", (req, res) => {
   res.send("server is starting");
