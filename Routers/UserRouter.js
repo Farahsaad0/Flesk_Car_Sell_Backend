@@ -14,6 +14,9 @@ let register = async (req, res) => {
       return res.status(400).send({ message: "Utilisateur est déjà existé!" });
     }
 
+    // Générer un code de vérification
+    const verificationCode = Math.floor(100000 + Math.random() * 900000); // Génère un nombre aléatoire à 6 chiffres
+
     // Créer un nouvel utilisateur
     const newUser = new User({
       Nom: Nom,
@@ -21,6 +24,8 @@ let register = async (req, res) => {
       Email: Email,
       Password: await bcrypt.hash(Password, 10),
       Role: Role,
+      Verified_code: verificationCode, // Attribution du code de vérification
+      Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé", // Initialiser les experts comme "En attente"
     });
     console.log("newUser------>", newUser);
     if (newUser.length == 0) {
@@ -29,12 +34,9 @@ let register = async (req, res) => {
     // Enregistrer le nouvel utilisateur dans la base de données
     await newUser.save();
 
-    // Générer un code de vérification
-    const verificationCode = Math.floor(100000 + Math.random() * 900000); // Génère un nombre aléatoire à 6 chiffres
-
     // Enregistrer le code de vérification dans la base de données pour l'utilisateur nouvellement créé
-    // newUser.Verified_code = verificationCode;
-    // await newUser.save();
+    newUser.Verified_code = verificationCode;
+    await newUser.save();
 
     // Envoyer le code de vérification par e-mail
     await sendVerificationEmail(newUser.Email, verificationCode);
@@ -75,7 +77,7 @@ let verifyRouteHandler = async (req, res) => {
     let user = await User.findOne({ Email: email });
 
     // Vérification du code de vérification
-    if (!user || user.Verified_code !== verificationCode) {
+    if (!user || user.Verified_code !== parseInt(verificationCode)) {
       return res
         .status(400)
         .json({ message: "Code de vérification invalide." });
@@ -83,6 +85,7 @@ let verifyRouteHandler = async (req, res) => {
 
     // Marquer l'utilisateur comme vérifié
     user.Verified = true;
+   
     await user.save();
 
     // Répondre avec un message de succès
@@ -104,6 +107,10 @@ let login = async (req, res) => {
     const user = await User.findOne({ Email: req.body.Email });
     if (!user) {
       return res.status(400).send("Utilisateur non trouvé");
+    }
+
+    if (user.Role === "expert" && user.Statut === "En attente") {
+      return res.status(401).send("Votre compte est en attente d'approbation par l'administrateur");
     }
 
     const passwordMatch = await bcrypt.compare(

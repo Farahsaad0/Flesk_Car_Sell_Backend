@@ -1,11 +1,12 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Importer useNavigate
 import styles from "./styles.module.css";
 
 const Login = () => {
   const [data, setData] = useState({ Email: "", Password: "" });
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // Utiliser useNavigate pour la navigation
 
   const handleChange = ({ currentTarget: input }) => {
     setData({ ...data, [input.name]: input.value });
@@ -17,9 +18,15 @@ const Login = () => {
       const url = "http://localhost:8000/login"; // Endpoint de connexion
       const response = await axios.post(url, data);
       const { _id, Nom, Prenom, Email, Role, token } = response.data; // Extraction des données de l'utilisateur et du token
-      localStorage.setItem("token", token);
 
-      window.location = "/"; // Redirection vers la page d'accueil après la connexion réussie
+      if (response.data.Status === "Approuvé") {
+        localStorage.setItem("token", response.data.token);
+        navigate("/"); // Rediriger vers la page d'accueil après la connexion réussie
+      } else {
+        setError(
+          "Votre compte est en attente d'approbation par l'administrateur."
+        );
+      }
     } catch (error) {
       if (
         error.response &&

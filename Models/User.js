@@ -24,11 +24,18 @@ const userSchema = new mongoose.Schema({
   },
   Verified: {
       type: Boolean , 
-      default: false},
+      default: false,
+    },
       
   Verified_code : {
     type: Number,
-    default:false  }
+    default:false  },
+
+    Statut: {
+      type: String,
+      enum: ["En attente", "Approuvé", "Rejeté"],
+      default: "En attente"
+    }
 
 });
 
