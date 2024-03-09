@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const userController = require("./Routers/UserRouter"); // Update import paths
 const carAdController = require("./Routers/CarAdRoute"); // Update import paths
 const expertController = require("././Routers/ExpertRoute");
+const adminController = require("././Routers/AdminRoute");
 
 const cors = require("cors");
 dotenv.config();
@@ -31,6 +32,7 @@ app.post("/register", userController.register);
 app.post("/verify", userController.verifyRouteHandler);
 app.get("/getAllUsers", userController.getAllUsers);
 app.get("/getPendingExperts", userController.getPendingExperts);
+app.get("/getUser/:id", userController.getUserById);
 
 app.post("/carAds", carAdController.createCarAd);
 app.get("/carAds", carAdController.getAllCarAds);
@@ -42,6 +44,8 @@ app.put("/:id/specialite", expertController.updateSpecialite);
 app.get("/experts", expertController.getAllExperts);
 
 app.put("/:id/bloquer", expertController.bloquerExpert);
+
+app.get("/getAdminUser/:id", adminController.getAdminUser);
 
 app.put("/approuverExpert/:id", expertController.approuverExpert);
 
