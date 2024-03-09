@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
   },
   Role: {
     type: String,
-    enum: ["Acheteur", "Vendeur", "Expert", "Administrateur"],
+    enum: ["Expert", "Administrateur"],
   },
   Verified: {
     type: Boolean,
@@ -29,14 +29,19 @@ const userSchema = new mongoose.Schema({
 
   Verified_code: {
     type: Number,
-    default:false  },
+    default: false,
+  },
+  
+  ExpertId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ExpertProfile",
+  },
 
-    Statut: {
-      type: String,
-      enum: ["En attente", "Approuvé", "Rejeté"],
-      default: "En attente"
-    }
-
+  Statut: {
+    type: String,
+    enum: ["En attente", "Approuvé", "Rejeté"],
+    default: "En attente",
+  },
 });
 
 module.exports = mongoose.model("User", userSchema, "user");

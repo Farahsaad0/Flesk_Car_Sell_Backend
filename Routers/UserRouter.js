@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../Models/User");
+const ExpertProfile = require("../Models/expert")
 const { generateLogToken } = require("../utils");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
@@ -8,7 +9,7 @@ const uuid = require("uuid");
 // Route de création d'utilisateur
 let register = async (req, res) => {
   try {
-    let { Email, Nom, Prenom, Password, Role } = req.body;
+    let { Email, Nom, Prenom, Password, Role, Spécialité } = req.body; // Add Spécialité to the request body
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ Email });
     if (existingUser) {
@@ -28,12 +29,19 @@ let register = async (req, res) => {
       Verified_code: verificationCode, // Attribution du code de vérification
       Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé", // Initialiser les experts comme "En attente"
     });
-    console.log("newUser------>", newUser);
-    if (newUser.length == 0) {
-      res.status(500).send(error);
-    }
-    // Enregistrer le nouvel utilisateur dans la base de données
+
+    // Save the user to the database
     await newUser.save();
+
+    // If the user role is Expert, create a new expert profile and link it to the user
+    if (Role.toLowerCase() === "expert") {
+      const newExpert = new ExpertProfile({
+        spécialité: Spécialité,
+      });
+      await newExpert.save();
+      newUser.ExpertId = newExpert._id; // Link the expert profile to the user
+      await newUser.save();
+    }
 
     // Enregistrer le code de vérification dans la base de données pour l'utilisateur nouvellement créé
     newUser.Verified_code = verificationCode;
@@ -51,6 +59,7 @@ let register = async (req, res) => {
       .send("Erreur lors de la création de l'utilisateur " + error);
   }
 };
+
 
 // Fonction pour envoyer un e-mail de vérification
 const sendVerificationEmail = async (email, code) => {
@@ -157,30 +166,51 @@ let getAllUsers = async (req, res) => {
   }
 };
 
+// let getPendingExperts = async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
+//     const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
+
+//     const totalExperts = await User.countDocuments({ Verified: false }); // Count total number of pending experts
+//     const totalPages = Math.ceil(totalExperts / perPage); // Calculate total number of pages
+
+//     const pendingExperts = await User.find({ Verified: false })
+//       .skip((page - 1) * perPage) // Skip experts based on the current page number and items per page
+//       .limit(perPage); // Limit the number of experts returned per page
+
+//     res.status(200).json({ pendingExperts, totalPages }); // Send pending experts and total pages in the response
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de la récupération des experts en attente :",
+//       error
+//     );
+//     res
+//       .status(500)
+//       .json({
+//         error:
+//           "Erreur lors de la récupération des experts en attente : " + error,
+//       });
+//   }
+// };
+
+
 let getPendingExperts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
-    const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
 
-    const totalExperts = await User.countDocuments({ Verified: false }); // Count total number of pending experts
-    const totalPages = Math.ceil(totalExperts / perPage); // Calculate total number of pages
+    const totalExperts = await User.countDocuments({ Role: "Expert", Statut: "En attente" });
+    const totalPages = Math.ceil(totalExperts / perPage);
 
-    const pendingExperts = await User.find({ Verified: false })
-      .skip((page - 1) * perPage) // Skip experts based on the current page number and items per page
-      .limit(perPage); // Limit the number of experts returned per page
+    const pendingExperts = await User.find({ Role: "Expert", Statut: "En attente" })
+      .populate("ExpertId") // Populate the ExpertId field to fetch related data from the expert collection
+      .skip((page - 1) * perPage)
+      .limit(perPage);
 
-    res.status(200).json({ pendingExperts, totalPages }); // Send pending experts and total pages in the response
+    res.status(200).json({ pendingExperts, totalPages });
   } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des experts en attente :",
-      error
-    );
-    res
-      .status(500)
-      .json({
-        error:
-          "Erreur lors de la récupération des experts en attente : " + error,
-      });
+    console.error("Erreur lors de la récupération des experts en attente :", error);
+    res.status(500).json({ error: "Erreur lors de la récupération des experts en attente : " + error });
   }
 };
 

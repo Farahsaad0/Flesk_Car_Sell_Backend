@@ -43,7 +43,7 @@ app.get("/experts", expertController.getAllExperts);
 
 app.put("/:id/bloquer", expertController.bloquerExpert);
 
-app.put("/:id/approuver", expertController.approuverExpert);
+app.put("/approuverExpert/:id", expertController.approuverExpert);
 
 app.put("/:id", expertController.updateExpert);
 

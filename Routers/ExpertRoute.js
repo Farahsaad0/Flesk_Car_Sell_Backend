@@ -1,25 +1,33 @@
 const express = require("express");
 const router = express.Router();
 const Expert = require("../Models/expert");
-
-
+const User = require("../Models/User")
 
 // Mettre à jour la spécialité de l'expert
 let updateSpecialite = async (req, res) => {
   try {
     const { spécialité } = req.body;
-    const expert = await Expert.findByIdAndUpdate(req.params.id, { spécialité }, { new: true });
+    const expert = await Expert.findByIdAndUpdate(
+      req.params.id,
+      { spécialité },
+      { new: true }
+    );
     if (!expert) {
       return res.status(404).json({ message: "Expert non trouvé." });
     }
     res.json(expert);
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la spécialité de l'expert :", error);
-    res.status(500).json({ message: "Erreur lors de la mise à jour de la spécialité de l'expert." });
+    console.error(
+      "Erreur lors de la mise à jour de la spécialité de l'expert :",
+      error
+    );
+    res
+      .status(500)
+      .json({
+        message: "Erreur lors de la mise à jour de la spécialité de l'expert.",
+      });
   }
 };
-
-
 
 // Récupérer tous les experts
 let getAllExperts = async (req, res) => {
@@ -31,32 +39,63 @@ let getAllExperts = async (req, res) => {
   }
 };
 
-  // Bloquer un expert
-  let bloquerExpert = async (req, res) => {
-    try {
-      const expert = await Expert.findByIdAndUpdate(req.params.id, { bloqué: true }, { new: true });
-      if (!expert) {
-        return res.status(404).json({ message: "Expert non trouvé." });
-      }
-      res.json(expert);
-    } catch (error) {
-      console.error("Erreur lors du blocage de l'expert :", error);
-      res.status(500).json({ message: "Erreur lors du blocage de l'expert." });
-    }
-  };
-// Approuver un expert
-let approuverExpert = async (req, res) => {
+// Bloquer un expert
+let bloquerExpert = async (req, res) => {
   try {
-    const expert = await Expert.findByIdAndUpdate(req.params.id, { approuvé: true }, { new: true });
+    const expert = await Expert.findByIdAndUpdate(
+      req.params.id,
+      { bloqué: true },
+      { new: true }
+    );
     if (!expert) {
       return res.status(404).json({ message: "Expert non trouvé." });
     }
     res.json(expert);
   } catch (error) {
-    console.error("Erreur lors de l'approbation de l'expert :", error);
-    res.status(500).json({ message: "Erreur lors de l'approbation de l'expert." });
+    console.error("Erreur lors du blocage de l'expert :", error);
+    res.status(500).json({ message: "Erreur lors du blocage de l'expert." });
   }
 };
+
+// Approuver un expert
+// let approuverExpert = async (req, res) => {
+//   try {
+//     const expert = await Expert.findByIdAndUpdate(req.params.id, { approuvé: true }, { new: true });
+//     if (!expert) {
+//       return res.status(404).json({ message: "Expert non trouvé." });
+//     }
+//     res.json(expert);
+//   } catch (error) {
+//     console.error("Erreur lors de l'approbation de l'expert :", error);
+//     res.status(500).json({ message: "Erreur lors de l'approbation de l'expert." });
+//   }
+// };
+
+let approuverExpert = async (req, res) => {
+  try {
+    const expert = await Expert.findByIdAndUpdate(
+      req.params.id,
+      { approuvé: true },
+      { new: true }
+    );
+    if (!expert) {
+      return res.status(404).json({ message: "Expert non trouvé." });
+    }
+    res.json(expert);
+
+    // Update the corresponding User's Statut to "Approuvé"
+    await User.findOneAndUpdate(
+      { ExpertId: req.params.id },
+      { Statut: "Approuvé" }
+    );
+  } catch (error) {
+    console.error("Erreur lors de l'approbation de l'expert :", error);
+    res
+      .status(500)
+      .json({ message: "Erreur lors de l'approbation de l'expert." });
+  }
+};
+
 // Fonction pour mettre à jour un expert
 let updateExpert = async (req, res) => {
   try {
@@ -70,21 +109,25 @@ let updateExpert = async (req, res) => {
     if (spécialité) updateFields.spécialité = spécialité;
     if (bloqué !== undefined) updateFields.bloqué = bloqué;
     if (approuvé !== undefined) updateFields.approuvé = approuvé;
-    
+
     // Recherche de l'expert par ID et mise à jour des champs spécifiés
-    const expert = await Expert.findByIdAndUpdate(req.params.id, updateFields, { new: true });
-    
+    const expert = await Expert.findByIdAndUpdate(req.params.id, updateFields, {
+      new: true,
+    });
+
     // Vérification si l'expert existe
     if (!expert) {
       return res.status(404).json({ message: "Expert non trouvé." });
     }
-    
+
     // Réponse avec l'expert mis à jour
     res.json(expert);
   } catch (error) {
     // Gestion des erreurs
     console.error("Erreur lors de la mise à jour de l'expert :", error);
-    res.status(500).json({ message: "Erreur lors de la mise à jour de l'expert." });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la mise à jour de l'expert." });
   }
 };
 
@@ -93,23 +136,28 @@ let deleteExpert = async (req, res) => {
   try {
     // Recherche de l'expert par ID et suppression
     const expert = await Expert.findByIdAndDelete(req.params.id);
-    
+
     // Vérification si l'expert existe
     if (!expert) {
       return res.status(404).json({ message: "Expert non trouvé." });
     }
-    
+
     // Réponse avec l'expert supprimé
     res.json(expert);
   } catch (error) {
     // Gestion des erreurs
     console.error("Erreur lors de la suppression de l'expert :", error);
-    res.status(500).json({ message: "Erreur lors de la suppression de l'expert." });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la suppression de l'expert." });
   }
 };
 
-
-module.exports = {updateSpecialite, getAllExperts,bloquerExpert,approuverExpert,updateExpert,deleteExpert};
-
-
-  
+module.exports = {
+  updateSpecialite,
+  getAllExperts,
+  bloquerExpert,
+  approuverExpert,
+  updateExpert,
+  deleteExpert,
+};
