@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../Models/User");
-const ExpertProfile = require("../Models/expert")
+const ExpertProfile = require("../Models/expert");
 const { generateLogToken } = require("../utils");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
@@ -60,7 +60,6 @@ let register = async (req, res) => {
   }
 };
 
-
 // Fonction pour envoyer un e-mail de vérification
 const sendVerificationEmail = async (email, code) => {
   const subject = "Code de vérification pour votre inscription";
@@ -95,7 +94,7 @@ let verifyRouteHandler = async (req, res) => {
 
     // Marquer l'utilisateur comme vérifié
     user.Verified = true;
-   
+
     await user.save();
 
     // Répondre avec un message de succès
@@ -147,8 +146,6 @@ let verifyRouteHandler = async (req, res) => {
 //   }
 // };
 
-
-
 let login = async (req, res) => {
   try {
     const { Email, Password } = req.body;
@@ -163,7 +160,9 @@ let login = async (req, res) => {
 
     // Check if the user's account is pending approval
     if (user.Role === "expert" && user.Statut === "En attente") {
-      return res.status(401).send("Votre compte est en attente d'approbation par l'administrateur");
+      return res
+        .status(401)
+        .send("Votre compte est en attente d'approbation par l'administrateur");
     }
 
     // Compare the provided password with the hashed password stored in the database
@@ -238,24 +237,57 @@ let getAllUsers = async (req, res) => {
 //   }
 // };
 
-
 let getPendingExperts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const totalExperts = await User.countDocuments({ Role: "Expert", Statut: "En attente" });
+    const totalExperts = await User.countDocuments({
+      Role: "Expert",
+      Statut: "En attente",
+    });
     const totalPages = Math.ceil(totalExperts / perPage);
 
-    const pendingExperts = await User.find({ Role: "Expert", Statut: "En attente" })
+    const pendingExperts = await User.find({
+      Role: "Expert",
+      Statut: "En attente",
+    })
       .populate("ExpertId") // Populate the ExpertId field to fetch related data from the expert collection
       .skip((page - 1) * perPage)
       .limit(perPage);
 
     res.status(200).json({ pendingExperts, totalPages });
   } catch (error) {
-    console.error("Erreur lors de la récupération des experts en attente :", error);
-    res.status(500).json({ error: "Erreur lors de la récupération des experts en attente : " + error });
+    console.error(
+      "Erreur lors de la récupération des experts en attente :",
+      error
+    );
+    res
+      .status(500)
+      .json({
+        error:
+          "Erreur lors de la récupération des experts en attente : " + error,
+      });
+  }
+};
+
+let getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user information:", error);
+    res
+      .status(500)
+      .json({ error: "Error fetching user information: " + error });
   }
 };
 
@@ -265,4 +297,5 @@ module.exports = {
   verifyRouteHandler,
   getAllUsers,
   getPendingExperts,
+  getUserById,
 };
