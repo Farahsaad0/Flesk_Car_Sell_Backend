@@ -112,34 +112,79 @@ let verifyRouteHandler = async (req, res) => {
 };
 
 // Route de connexion
+// let login = async (req, res) => {
+//   try {
+//     const user = await User.findOne({ Email: req.body.Email });
+//     if (!user) {
+//       return res.status(400).send("Utilisateur non trouvé");
+//     }
+
+//     if (user.Role === "expert" && user.Statut === "En attente") {
+//       return res.status(401).send("Votre compte est en attente d'approbation par l'administrateur");
+//     }
+
+//     const passwordMatch = await bcrypt.compare(
+//       req.body.Password,
+//       user.Password
+//     );
+//     if (!passwordMatch) {
+//       return res.status(401).send("Invalid password");
+//     }
+
+//     const token = generateLogToken(user);
+
+//     res.send({
+//       _id: user._id,
+//       Nom: user.Nom,
+//       Prenom: user.Prenom,
+//       Email: user.Email,
+//       Role: user.Role,
+//       token: token,
+//     });
+//   } catch (error) {
+//     console.error("Erreur lors de la connexion de l'utilisateur :", error);
+//     res.status(500).send("Erreur lors de la connexion de l'utilisateur");
+//   }
+// };
+
+
+
 let login = async (req, res) => {
   try {
-    const user = await User.findOne({ Email: req.body.Email });
+    const { Email, Password } = req.body;
+
+    // Find the user by email
+    const user = await User.findOne({ Email });
+
+    // If user doesn't exist, return error
     if (!user) {
       return res.status(400).send("Utilisateur non trouvé");
     }
 
+    // Check if the user's account is pending approval
     if (user.Role === "expert" && user.Statut === "En attente") {
       return res.status(401).send("Votre compte est en attente d'approbation par l'administrateur");
     }
 
-    const passwordMatch = await bcrypt.compare(
-      req.body.Password,
-      user.Password
-    );
+    // Compare the provided password with the hashed password stored in the database
+    const passwordMatch = await bcrypt.compare(Password, user.Password);
+
+    // If passwords don't match, return error
     if (!passwordMatch) {
-      return res.status(401).send("Invalid password");
+      return res.status(401).send("Mot de passe incorrect");
     }
 
+    // If everything is correct, generate token and send user data with token
     const token = generateLogToken(user);
 
-    res.send({
+    res.json({
       _id: user._id,
       Nom: user.Nom,
       Prenom: user.Prenom,
       Email: user.Email,
       Role: user.Role,
       token: token,
+      Statut: user.Statut,
     });
   } catch (error) {
     console.error("Erreur lors de la connexion de l'utilisateur :", error);
@@ -214,29 +259,10 @@ let getPendingExperts = async (req, res) => {
   }
 };
 
-let getUserById = async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    // Find the user by ID
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("Error fetching user information:", error);
-    res.status(500).json({ error: "Error fetching user information: " + error });
-  }
-};
-
 module.exports = {
   login,
   register,
   verifyRouteHandler,
   getAllUsers,
   getPendingExperts,
-  getUserById,
 };
