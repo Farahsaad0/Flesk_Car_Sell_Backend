@@ -1,25 +1,31 @@
 const express = require("express");
-const app = express();
-const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const userController = require("./Routers/UserRouter"); // Update import paths
-const carAdController = require("./Routers/CarAdRoute"); // Update import paths
-const expertController = require("././Routers/ExpertRoute");
-const adminController = require("././Routers/AdminRoute");
-
 const cors = require("cors");
+const dotenv = require("dotenv");
+
+// Import controllers
+const userController = require("./Routers/UserRouter");
+const carAdController = require("./Routers/CarAdRoute");
+const expertController = require("./Routers/ExpertRoute");
+const adminController = require("./Routers/AdminRoute");
+
 dotenv.config();
+
+const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Middleware CORS
-app.use(cors());
-
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+app.use(
+  cors({
+    credentials: true,
+    origin: "http://localhost:3000",
   })
+);
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to database");
   })
@@ -45,19 +51,20 @@ app.get("/experts", expertController.getAllExperts);
 
 app.put("/:id/bloquer", expertController.bloquerExpert);
 
-app.get("/getAdminUser/:id", adminController.getAdminUser);
+app.post("/adminLogin", adminController.adminLogin);
 
 app.put("/approuverExpert/:id", expertController.approuverExpert);
 
 app.put("/:id", expertController.updateExpert);
 
-app.delete("/:id",expertController. deleteExpert);
+app.delete("/:id", expertController.deleteExpert);
 
 app.get("/", (req, res) => {
-  res.send("server is starting");
+  res.send("Server is running");
 });
 
-const port = process.env.PORT || 8000;
+// Start server
+const port = process.env.PORT;
 app.listen(port, () => {
-  console.log(`server start at http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });
