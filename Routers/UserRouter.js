@@ -50,8 +50,8 @@ let register = async (req, res) => {
     // Envoyer le code de vérification par e-mail
     await sendVerificationEmail(newUser.Email, verificationCode);
 
-    // Renvoyer les détails de l'utilisateur nouvellement créé
-    res.status(201).json(newUser);
+    // Renvoyer les détails de l'utilisateur nouvellement créé, y compris l'ID
+    res.status(201).json({ user: newUser }); // Modified to include the user object in the response
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur :", error);
     res
@@ -176,8 +176,9 @@ let login = async (req, res) => {
     // If everything is correct, generate token and send user data with token
     const token = generateLogToken(user);
 
+    // Include the user ID in the response
     res.json({
-      _id: user._id,
+      _id: user._id, // Include the user ID in the response
       Nom: user.Nom,
       Prenom: user.Prenom,
       Email: user.Email,
@@ -190,6 +191,7 @@ let login = async (req, res) => {
     res.status(500).send("Erreur lors de la connexion de l'utilisateur");
   }
 };
+
 
 let getAllUsers = async (req, res) => {
   try {
@@ -236,6 +238,23 @@ let getAllUsers = async (req, res) => {
 //       });
 //   }
 // };
+let getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user information:", error);
+    res.status(500).json({ error: "Error fetching user information: " + error });
+  }
+};
 
 let getPendingExperts = async (req, res) => {
   try {

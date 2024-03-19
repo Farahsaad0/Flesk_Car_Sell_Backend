@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const CarAd = require("../Models/carAd");
+const User = require("../Models/User"); 
 
 // Route pour la création d'une nouvelle annonce de voiture
-let createCarAd = async (req, res) => {
+const createCarAd = async (req, res) => {
   try {
     const {
       titre,
@@ -15,7 +16,14 @@ let createCarAd = async (req, res) => {
       date,
       photo,
       sponsorship,
+      userId // Nouveau champ pour l'ID de l'utilisateur
     } = req.body;
+
+    // Vérifie si l'utilisateur existe
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
 
     // Crée une nouvelle instance de CarAd
     const newCarAd = new CarAd({
@@ -28,17 +36,24 @@ let createCarAd = async (req, res) => {
       date,
       photo,
       sponsorship,
+      utilisateur: userId // Associe l'annonce à l'utilisateur
     });
 
     // Enregistre la nouvelle annonce dans la base de données
     const ad = await newCarAd.save();
+
+   // Générer l'URL complet de l'image
+const imageUrl = req.protocol + '://' + req.get('host') + '/public/uploads/' + ad.photo;
+
+    // Mettre à jour l'annonce avec l'URL de l'image
+    ad.photo = imageUrl;
+    await ad.save();
+
     console.log("Annonce créée avec succès :", ad);
     res.status(201).json(ad); // Renvoie la nouvelle annonce créée en tant que réponse
   } catch (error) {
     console.error("Erreur lors de la création de l'annonce :", error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la création de l'annonce " + error }); // Renvoie une erreur en cas d'échec
+    res.status(500).json({ error: "Erreur lors de la création de l'annonce " + error }); // Renvoie une erreur en cas d'échec
   }
 };
 
@@ -53,7 +68,7 @@ let getAllCarAds = async (req, res) => {
       .status(500)
       .json({ error: "Erreur lors de la récupération des annonces " + error });
   }
-};
+}; 
 
 //  modifier une annonce de voiture
 let updateCarAd = async (req, res) => {
