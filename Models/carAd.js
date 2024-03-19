@@ -12,15 +12,20 @@ const carAdSchema = new mongoose.Schema({
   modele: { type: String, required: true },
 
   annee: {
-    type: String,
+    type: Number,
     required: true,
   },
 
-  Date: { type: Date, default: Date.now },
+  date: { type: Date, default: Date.now },
 
   photo: { type: String, required: true },
 
   sponsorship: { type: String, enum: ["Gold", "Silver", "Bronze"] }, // Champ de parrainage
+  // Ajouter une référence à l'utilisateur
+  utilisateur: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
 
 const CarAd = mongoose.model("CarAd", carAdSchema);

@@ -26,6 +26,7 @@ app.use(
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to database");
   })
@@ -38,7 +39,7 @@ app.post("/register", userController.register);
 app.post("/verify", userController.verifyRouteHandler);
 app.get("/getAllUsers", userController.getAllUsers);
 app.get("/getPendingExperts", userController.getPendingExperts);
-app.get("/getUser/:id", userController.getUserById);
+ app.get("/getUser/:id", userController.getUserById);
 
 app.post("/carAds", carAdController.createCarAd);
 app.get("/carAds", carAdController.getAllCarAds);
