@@ -192,7 +192,6 @@ let login = async (req, res) => {
   }
 };
 
-
 let getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
@@ -252,7 +251,9 @@ let getUserById = async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching user information:", error);
-    res.status(500).json({ error: "Error fetching user information: " + error });
+    res
+      .status(500)
+      .json({ error: "Error fetching user information: " + error });
   }
 };
 
@@ -281,32 +282,9 @@ let getPendingExperts = async (req, res) => {
       "Erreur lors de la récupération des experts en attente :",
       error
     );
-    res
-      .status(500)
-      .json({
-        error:
-          "Erreur lors de la récupération des experts en attente : " + error,
-      });
-  }
-};
-
-let getUserById = async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    // Find the user by ID
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("Error fetching user information:", error);
-    res
-      .status(500)
-      .json({ error: "Error fetching user information: " + error });
+    res.status(500).json({
+      error: "Erreur lors de la récupération des experts en attente : " + error,
+    });
   }
 };
 

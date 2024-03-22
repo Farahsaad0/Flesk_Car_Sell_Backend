@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const upload = require('./multer-config');
+
+
 
 // Import controllers
 const userController = require("./Routers/UserRouter");
@@ -9,9 +12,22 @@ const carAdController = require("./Routers/CarAdRoute");
 const expertController = require("./Routers/ExpertRoute");
 const adminController = require("./Routers/AdminRoute");
 
+ 
 dotenv.config();
-
+ 
 const app = express();
+
+// Logging middleware function
+const logRequest = (req, res, next) => {
+  console.log("Request URL:", req.url);
+  console.log("Request Method:", req.method);
+  console.log("Request Headers:", req.headers);
+  console.log("Request Body:", req.file); // This will log the request body, if it's parsed by body-parser or similar middleware
+  next(); // Call next() to pass control to the next middleware or route handler
+};
+
+// Mount the logging middleware
+app.use(logRequest);
 
 // Middleware
 app.use(express.json());
@@ -25,7 +41,6 @@ app.use(
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI)
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("Connected to database");
@@ -44,7 +59,10 @@ app.get("/getPendingExperts", userController.getPendingExperts);
  app.get("/getUser/:id", userController.getUserById);
 
 //* car routes
-app.post("/carAds", carAdController.createCarAd);
+//app.post("/carAds", carAdController.createCarAd);
+app.post("/carAds", upload.single('photo'), carAdController.createCarAd);
+
+
 app.get("/carAds", carAdController.getAllCarAds);
 app.put("/carAds/:id", carAdController.updateCarAd);
 app.delete("/carAds/:id", carAdController.deleteCarAd);
