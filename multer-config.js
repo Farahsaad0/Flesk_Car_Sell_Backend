@@ -24,13 +24,13 @@ const storage = multer.diskStorage({
 
 // Limiter les types de fichiers acceptés
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png","image/jpg"];
-  if (allowedTypes.includes(file.mimetype)) {
+  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
     cb(null, true); // Accepter le fichier
   } else {
     cb(new Error("Format de fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG."));
   }
 };
+
 
 // Créer l'instance de multer avec les options de stockage et de filtrage
 const upload = multer({

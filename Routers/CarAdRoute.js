@@ -59,35 +59,31 @@ const upload = require("../multer-config"); // Importer multer-config
 //   }
 // };
 
-const createCarAd = async (req, res) => {
+const createCarAd = (req, res) => {
   console.log("_1_");
-  try {
-    
+  // The file upload middleware should be used separately
+  // This middleware handles the file upload
+  upload.single("photo")(req, res, async (err) => {
     console.log("_2_");
-    // The file upload middleware should be used separately
-    // This middleware handles the file upload
-    upload.single("photo")(req, res, async (err) => {
-      
+    if (err) {
       console.log("_3_");
-      if (err) {
-        console.log("_4_");
-        // Check for specific multer errors
-        if (err.code === "LIMIT_FILE_SIZE") {
-          return res.status(400).json({ error: "File size too large." });
-        }
-        if (err.code === "LIMIT_UNEXPECTED_FILE") {
-          return res.status(400).json({ error: "Too many files uploaded." });
-        }
-        // Handle other multer errors
-        return res.status(500).json({ error: "_Error uploading file: " + err.message });
+      // Check for specific multer errors
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({ error: "File size too large." });
       }
-      console.log("_1_");
-      // Now you can proceed with your logic after the file has been uploaded
-      // Make sure to check if req.file exists before accessing it
-      if (!req.file) {
-        return res.status(400).json({ error: "No photo uploaded." });
+      if (err.code === "LIMIT_UNEXPECTED_FILE") {
+        return res.status(400).json({ error: "Too many files uploaded." });
       }
+      // Handle other multer errors
+      return res.status(500).json({ error: "_Error uploading file: " + err.message });
+    }
+    // Now you can proceed with your logic after the file has been uploaded
+    // Make sure to check if req.file exists before accessing it
+    if (!req.file) {
+      return res.status(400).json({ error: "No photo uploaded." });
+    }
 
+    try {
       const {
         titre,
         description,
@@ -134,11 +130,11 @@ const createCarAd = async (req, res) => {
       const ad = await newCarAd.save();
       console.log("Ad created successfully:", ad);
       res.status(201).json(ad);
-    });
-  } catch (error) {
-    console.error("Error creating ad:", error);
-    res.status(500).json({ error: "Error creating ad: " + error });
-  }
+    } catch (error) {
+      console.error("Error creating ad:", error);
+      res.status(500).json({ error: "Error creating ad: " + error });
+    }
+  });
 };
 
 // récupérer toutes les annonces de voiture
