@@ -13,9 +13,9 @@ let register = async (req, res) => {
     let { Email, Nom, Prenom, Password, Role, Spécialité } = req.body;
 
     // Vérifier si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ Email })
+    const existingUser = await User.findOne({ Email });
     if (existingUser) {
-      return res.status(409).send({ message: "Utilisateur est déjà existé!" });
+      return res.status(400).send({ message: "Utilisateur déjà existant!" });
     }
 
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
@@ -189,6 +189,93 @@ let login = async (req, res) => {
 };
 
 
+
+// Définition de la fonction pour renvoyer les données de l'utilisateur
+let getUserData = async (req, res) => {
+  try {
+    // Extraire le token d'authentification de l'en-tête de la requête
+    const token = req.headers.authorization.split(' ')[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+
+    // Vérifier et décoder le token
+    const decodedToken = verifyToken(token);
+
+    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
+    const userId = decodedToken._id;
+
+    // Trouver l'utilisateur par son ID dans la base de données
+    const user = await User.findById(userId);
+
+    // Si l'utilisateur n'existe pas, retourner une erreur
+    if (!user) {
+      return res.status(404).send("Utilisateur non trouvé");
+    }
+
+    // Retourner les données de l'utilisateur sous forme de réponse JSON
+    res.json({
+      _id: user._id,
+      Nom: user.Nom,
+      Prenom: user.Prenom,
+      Email: user.Email,
+      Role: user.Role,
+      Statut: user.Statut,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données utilisateur :", error);
+    res.status(500).send("Erreur lors de la récupération des données utilisateur");
+  }
+};
+
+
+
+let updateUserData = async (req, res) => {
+  try {
+    // Extraire le token d'authentification de l'en-tête de la requête
+    const token = req.headers.authorization.split(' ')[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+
+    // Vérifier et décoder le token
+    const decodedToken = verifyToken(token);
+
+    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
+    const userId = decodedToken._id;
+
+    // Vérifier si le nouveau mot de passe est présent dans les données de la requête
+    if (req.body.Password) {
+      // Hacher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
+
+      // Remplacer le mot de passe en texte clair par le mot de passe haché dans les données de la requête
+      req.body.Password = hashedPassword;
+    }
+
+    // Vérifier si le rôle a été modifié en "Expert"
+    if (req.body.Role === "Expert") {
+      // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
+      req.body.Statut = "En attente";
+    }
+
+    // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true });
+
+    // Si l'utilisateur n'existe pas, retourner une erreur
+    if (!updatedUser) {
+      return res.status(404).send("Utilisateur non trouvé");
+    }
+
+    // Retourner les données de l'utilisateur mises à jour sous forme de réponse JSON
+    res.json({
+      _id: updatedUser._id,
+      Nom: updatedUser.Nom,
+      Prenom: updatedUser.Prenom,
+      Email: updatedUser.Email,
+      Role: updatedUser.Role,
+      Statut: updatedUser.Statut,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour des données utilisateur :", error);
+    res.status(500).send("Erreur lors de la mise à jour des données utilisateur");
+  }
+};
+
 let getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
@@ -197,7 +284,7 @@ let getAllUsers = async (req, res) => {
     const totalUsers = await User.countDocuments(); // Count total number of users
     const totalPages = Math.ceil(totalUsers / perPage); // Calculate total number of pages
 
-    const users = await User.find({} , '-Password -__v -Verified_code')
+    const users = await User.find()
       .skip((page - 1) * perPage) // Skip users based on the current page number and items per page
       .limit(perPage); // Limit the number of users returned per page
 
@@ -282,9 +369,6 @@ let getPendingExperts = async (req, res) => {
     res.status(500).json({
       error: "Erreur lors de la récupération des experts en attente : " + error,
     });
-    res.status(500).json({
-      error: "Erreur lors de la récupération des experts en attente : " + error,
-    });
   }
 };
 
@@ -337,8 +421,8 @@ module.exports = {
   getAllUsers,
   getPendingExperts,
   getUserById,
-  blockUser,
-  unblockUser,
   getUserData,
   updateUserData ,
+  blockUser,
+  unblockUser, 
 };
