@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 });
 
 // Limiter les types de fichiers acceptés
-const fileFilter = (req, file, cb) => {
+const fileFilter = (req, file, cb) => { 
   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
     cb(null, true); // Accepter le fichier
   } else {
