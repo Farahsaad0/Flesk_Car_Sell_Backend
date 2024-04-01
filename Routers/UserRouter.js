@@ -372,6 +372,48 @@ let getPendingExperts = async (req, res) => {
   }
 };
 
+let blockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.Statut = "Bloqué"; 
+
+    await user.save();
+
+    res.status(200).json({ message: "User blocked successfully." });
+  } catch (error) {
+    console.error("Error blocking user:", error);
+    res.status(500).json({ error: "Error blocking user: " + error });
+  }
+};
+
+let unblockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.Statut = "Approuvé"; 
+
+    await user.save();
+
+    res.status(200).json({ message: "User unblocked successfully." });
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    res.status(500).json({ error: "Error unblocking user: " + error });
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -381,4 +423,6 @@ module.exports = {
   getUserById,
   getUserData,
   updateUserData ,
+  blockUser,
+  unblockUser, 
 };

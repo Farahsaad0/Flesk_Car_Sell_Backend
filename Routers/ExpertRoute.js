@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Expert = require("../Models/expert");
-const User = require("../Models/User")
+const User = require("../Models/User");
 
 // Mettre à jour la spécialité de l'expert
 let updateSpecialite = async (req, res) => {
@@ -21,11 +21,9 @@ let updateSpecialite = async (req, res) => {
       "Erreur lors de la mise à jour de la spécialité de l'expert :",
       error
     );
-    res
-      .status(500)
-      .json({
-        message: "Erreur lors de la mise à jour de la spécialité de l'expert.",
-      });
+    res.status(500).json({
+      message: "Erreur lors de la mise à jour de la spécialité de l'expert.",
+    });
   }
 };
 

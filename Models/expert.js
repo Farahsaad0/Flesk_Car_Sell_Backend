@@ -6,20 +6,12 @@ const expertSchema = new mongoose.Schema({
     default: false,
   },
 
-  bloqué: {
-    type: Boolean,
-    default: false,
-  },
 
   spécialité: {
     type: String,
     required: true,
   },
 
-  // UserId: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "User",
-  // },
 });
 
 const Expert = mongoose.model("ExpertProfile", expertSchema);

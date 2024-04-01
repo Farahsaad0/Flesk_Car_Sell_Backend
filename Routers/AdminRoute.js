@@ -21,17 +21,33 @@ let adminLogin = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    // Generate JWT token
+    //* Generate JWT token
     const token = jwt.sign(
       { userId: adminUser._id, email: adminUser.Email, role: adminUser.Role },
       process.env.JWT_PASS,
-      { expiresIn: "1h" }
+      { expiresIn: "30s" }
     );
 
-    // Exclude password from adminUser object
+    //* Generate Refresh Token
+    const refreshToken = jwt.sign(
+      { userId: adminUser._id, email: adminUser.Email },
+      process.env.JWT_REF_PASS,
+      { expiresIn: "1d" }
+    );
+
+    adminUser.refreshToken = refreshToken;
+    await adminUser.save();
+
     const { Password, ...userDetails } = adminUser.toObject();
 
-    // Return token and user details without password
+    // Set cookie with refresh token
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).json({ token, adminUser: userDetails });
   } catch (error) {
     console.error("C: Error logging in admin:", error);
@@ -51,7 +67,9 @@ let updateAdminCredentials = async (req, res) => {
     if (!adminUser) {
       // Return the received data along with the message if admin user not found
       const requestData = { id, newPassword };
-      return res.status(404).json({ message: "Admin user not found.", requestData });
+      return res
+        .status(404)
+        .json({ message: "Admin user not found.", requestData });
     }
 
     // Check if old password is provided
@@ -60,7 +78,10 @@ let updateAdminCredentials = async (req, res) => {
     }
 
     // Compare old password with the password stored in the database
-    const isOldPasswordValid = await bcrypt.compare(oldPassword, adminUser.Password);
+    const isOldPasswordValid = await bcrypt.compare(
+      oldPassword,
+      adminUser.Password
+    );
     if (!isOldPasswordValid) {
       return res.status(401).json({ message: "Invalid old password." });
     }
@@ -77,10 +98,14 @@ let updateAdminCredentials = async (req, res) => {
       await adminUser.save();
     }
 
-    res.status(200).json({ message: "Admin credentials updated successfully." });
+    res
+      .status(200)
+      .json({ message: "Admin credentials updated successfully." });
   } catch (error) {
     console.error("C: Error updating admin credentials:", error);
-    res.status(500).json({ error: "Error updating admin credentials: " + error });
+    res
+      .status(500)
+      .json({ error: "Error updating admin credentials: " + error });
   }
 };
 
