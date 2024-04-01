@@ -1,16 +1,22 @@
+const dotenv = require("dotenv");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser");
+const verifyJWT = require("./middleware/verifyJWT");
+const router = express.Router();
 
 // Import controllers
 const userController = require("./Routers/UserRouter");
 const carAdController = require("./Routers/CarAdRoute");
 const expertController = require("./Routers/ExpertRoute");
 const adminController = require("./Routers/AdminRoute");
+const logoutController = require("./controllers/logoutController");
+const refreshTokenController = require("./controllers/refreshTokenController");
 
 dotenv.config();
 
+const port = process.env.PORT;
 const app = express();
 
 // Middleware
@@ -22,26 +28,17 @@ app.use(
     origin: "http://localhost:3000",
   })
 );
-
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to database");
-  })
-  .catch((err) => {
-    console.error(err.message);
-  });
+app.use(cookieParser());
 
 //* authentication routes
 app.post("/login", userController.login);
 app.post("/register", userController.register);
 app.post("/verify", userController.verifyRouteHandler);
+app.get("/logout", logoutController.handleLogout);
+app.get("/refresh", refreshTokenController.handleRefreshToken);
 
-app.get("/getAllUsers", userController.getAllUsers);
-app.get("/getPendingExperts", userController.getPendingExperts);
- app.get("/getUser/:id", userController.getUserById);
+app.get("/getAllUsers",verifyJWT, userController.getAllUsers);
+app.get("/getUser/:id", userController.getUserById);
 
 //* car routes
 app.post("/carAds", carAdController.createCarAd);
@@ -57,8 +54,11 @@ app.put("/:id/bloquer", expertController.bloquerExpert);
 
 //* admin routes
 app.post("/adminLogin", adminController.adminLogin);
-app.put("/updateAdmin/:id", adminController.updateAdminCredentials);
-app.put("/approuverExpert/:id", expertController.approuverExpert);
+app.put("/updateAdmin/:id",verifyJWT, adminController.updateAdminCredentials);
+app.put("/approuverExpert/:id",verifyJWT, expertController.approuverExpert);
+app.get("/getPendingExperts",verifyJWT, userController.getPendingExperts);
+app.put("/users/:id/block",verifyJWT, userController.blockUser); 
+app.put("/users/:id/unblock",verifyJWT, userController.unblockUser); 
 
 app.put("/:id", expertController.updateExpert);
 
@@ -68,8 +68,15 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-// Start server
-const port = process.env.PORT;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("Connected to database");
+    // Start server
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error(err.message);
+  });

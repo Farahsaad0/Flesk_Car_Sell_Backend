@@ -11,9 +11,9 @@ let register = async (req, res) => {
   try {
     let { Email, Nom, Prenom, Password, Role, Spécialité } = req.body; // Add Spécialité to the request body
     // Vérifier si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ Email });
+    const existingUser = await User.findOne({ Email })
     if (existingUser) {
-      return res.status(400).send({ message: "Utilisateur est déjà existé!" });
+      return res.status(409).send({ message: "Utilisateur est déjà existé!" });
     }
 
     // Générer un code de vérification
@@ -192,7 +192,6 @@ let login = async (req, res) => {
   }
 };
 
-
 let getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
@@ -201,7 +200,7 @@ let getAllUsers = async (req, res) => {
     const totalUsers = await User.countDocuments(); // Count total number of users
     const totalPages = Math.ceil(totalUsers / perPage); // Calculate total number of pages
 
-    const users = await User.find()
+    const users = await User.find({} , '-Password -__v -Verified_code')
       .skip((page - 1) * perPage) // Skip users based on the current page number and items per page
       .limit(perPage); // Limit the number of users returned per page
 
@@ -212,49 +211,6 @@ let getAllUsers = async (req, res) => {
   }
 };
 
-// let getPendingExperts = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
-//     const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
-
-//     const totalExperts = await User.countDocuments({ Verified: false }); // Count total number of pending experts
-//     const totalPages = Math.ceil(totalExperts / perPage); // Calculate total number of pages
-
-//     const pendingExperts = await User.find({ Verified: false })
-//       .skip((page - 1) * perPage) // Skip experts based on the current page number and items per page
-//       .limit(perPage); // Limit the number of experts returned per page
-
-//     res.status(200).json({ pendingExperts, totalPages }); // Send pending experts and total pages in the response
-//   } catch (error) {
-//     console.error(
-//       "Erreur lors de la récupération des experts en attente :",
-//       error
-//     );
-//     res
-//       .status(500)
-//       .json({
-//         error:
-//           "Erreur lors de la récupération des experts en attente : " + error,
-//       });
-//   }
-// };
-let getUserById = async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    // Find the user by ID
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("Error fetching user information:", error);
-    res.status(500).json({ error: "Error fetching user information: " + error });
-  }
-};
 
 let getPendingExperts = async (req, res) => {
   try {
@@ -281,12 +237,9 @@ let getPendingExperts = async (req, res) => {
       "Erreur lors de la récupération des experts en attente :",
       error
     );
-    res
-      .status(500)
-      .json({
-        error:
-          "Erreur lors de la récupération des experts en attente : " + error,
-      });
+    res.status(500).json({
+      error: "Erreur lors de la récupération des experts en attente : " + error,
+    });
   }
 };
 
@@ -310,6 +263,48 @@ let getUserById = async (req, res) => {
   }
 };
 
+let blockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.Statut = "Bloqué"; 
+
+    await user.save();
+
+    res.status(200).json({ message: "User blocked successfully." });
+  } catch (error) {
+    console.error("Error blocking user:", error);
+    res.status(500).json({ error: "Error blocking user: " + error });
+  }
+};
+
+let unblockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.Statut = "Approuvé"; 
+
+    await user.save();
+
+    res.status(200).json({ message: "User unblocked successfully." });
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    res.status(500).json({ error: "Error unblocking user: " + error });
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -317,4 +312,6 @@ module.exports = {
   getAllUsers,
   getPendingExperts,
   getUserById,
+  blockUser,
+  unblockUser,
 };
