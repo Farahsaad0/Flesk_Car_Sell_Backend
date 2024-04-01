@@ -240,17 +240,17 @@ let getCarAdById = async (req, res) => {
 // rechercher des annonces de voiture en fonction de certains critères
 let searchCarAds = async (req, res) => {
   try {
-    const { marque, modele, anneeFrom, anneeTo, prixFrom, prixTo } = req.query;
+    const { marque, modele, anneeFrom, anneeTo, prixFrom, prixTo, adresse } = req.query;
     let query = {};
 
     // Filtrer par marque
     if (marque) {
-      query.make = marque;
+      query.marque = marque;
     }
 
     // Filtrer par modèle
     if (modele) {
-      query.model = modele;
+      query.modele = modele;
     }
 
     // Filtrer par année (intervalle)
@@ -271,14 +271,16 @@ let searchCarAds = async (req, res) => {
       query.prix = { $lte: prixTo };
     }
 
+    // Filtrer par adresse
+    if (adresse) {
+      query.adresse = adresse;
+    }
+
     // Recherche des annonces de voiture en fonction des critères spécifiés
     const ads = await CarAd.find(query);
     res.status(200).json(ads); // Renvoie les annonces correspondantes
   } catch (error) {
-    console.error(
-      "Erreur lors de la recherche des annonces de voiture :",
-      error
-    );
+    console.error("Erreur lors de la recherche des annonces de voiture :", error);
     res.status(500).json({
       error: "Erreur lors de la recherche des annonces de voiture " + error,
     });

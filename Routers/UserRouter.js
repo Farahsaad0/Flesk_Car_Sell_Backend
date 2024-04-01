@@ -3,55 +3,51 @@ const bcrypt = require("bcrypt");
 const User = require("../Models/User");
 const ExpertProfile = require("../Models/expert");
 const { generateLogToken } = require("../utils");
+const { verifyToken } =require("../utils");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
 
 // Route de création d'utilisateur
 let register = async (req, res) => {
   try {
-    let { Email, Nom, Prenom, Password, Role, Spécialité } = req.body; // Add Spécialité to the request body
+    let { Email, Nom, Prenom, Password, Role, Spécialité } = req.body;
+
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ Email });
     if (existingUser) {
-      return res.status(400).send({ message: "Utilisateur est déjà existé!" });
+      return res.status(400).send({ message: "Utilisateur déjà existant!" });
     }
 
-    // Générer un code de vérification
-    const verificationCode = Math.floor(100000 + Math.random() * 900000); // Génère un nombre aléatoire à 6 chiffres
+    const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    // Créer un nouvel utilisateur
     const newUser = new User({
       Nom: Nom,
       Prenom: Prenom,
       Email: Email,
       Password: await bcrypt.hash(Password, 10),
       Role: Role,
-      Verified_code: verificationCode, // Attribution du code de vérification
-      Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé", // Initialiser les experts comme "En attente"
+      Verified_code: verificationCode,
+      Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé",
     });
 
-    // Save the user to the database
     await newUser.save();
 
-    // If the user role is Expert, create a new expert profile and link it to the user
     if (Role.toLowerCase() === "expert") {
       const newExpert = new ExpertProfile({
         spécialité: Spécialité,
       });
       await newExpert.save();
-      newUser.ExpertId = newExpert._id; // Link the expert profile to the user
+      newUser.ExpertId = newExpert._id;
       await newUser.save();
+
+      // Envoi du code de vérification par e-mail pour les experts
+      await sendVerificationEmail(newUser.Email, verificationCode);
+    } else {
+      // Envoi du code de vérification par e-mail pour les utilisateurs standards
+      await sendVerificationEmail(newUser.Email, verificationCode);
     }
 
-    // Enregistrer le code de vérification dans la base de données pour l'utilisateur nouvellement créé
-    newUser.Verified_code = verificationCode;
-    await newUser.save();
-
-    // Envoyer le code de vérification par e-mail
-    await sendVerificationEmail(newUser.Email, verificationCode);
-
-    // Renvoyer les détails de l'utilisateur nouvellement créé, y compris l'ID
-    res.status(201).json({ user: newUser }); // Modified to include the user object in the response
+    res.status(201).json({ user: newUser });
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur :", error);
     res
@@ -192,6 +188,94 @@ let login = async (req, res) => {
   }
 };
 
+
+
+// Définition de la fonction pour renvoyer les données de l'utilisateur
+let getUserData = async (req, res) => {
+  try {
+    // Extraire le token d'authentification de l'en-tête de la requête
+    const token = req.headers.authorization.split(' ')[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+
+    // Vérifier et décoder le token
+    const decodedToken = verifyToken(token);
+
+    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
+    const userId = decodedToken._id;
+
+    // Trouver l'utilisateur par son ID dans la base de données
+    const user = await User.findById(userId);
+
+    // Si l'utilisateur n'existe pas, retourner une erreur
+    if (!user) {
+      return res.status(404).send("Utilisateur non trouvé");
+    }
+
+    // Retourner les données de l'utilisateur sous forme de réponse JSON
+    res.json({
+      _id: user._id,
+      Nom: user.Nom,
+      Prenom: user.Prenom,
+      Email: user.Email,
+      Role: user.Role,
+      Statut: user.Statut,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données utilisateur :", error);
+    res.status(500).send("Erreur lors de la récupération des données utilisateur");
+  }
+};
+
+
+
+let updateUserData = async (req, res) => {
+  try {
+    // Extraire le token d'authentification de l'en-tête de la requête
+    const token = req.headers.authorization.split(' ')[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+
+    // Vérifier et décoder le token
+    const decodedToken = verifyToken(token);
+
+    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
+    const userId = decodedToken._id;
+
+    // Vérifier si le nouveau mot de passe est présent dans les données de la requête
+    if (req.body.Password) {
+      // Hacher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
+
+      // Remplacer le mot de passe en texte clair par le mot de passe haché dans les données de la requête
+      req.body.Password = hashedPassword;
+    }
+
+    // Vérifier si le rôle a été modifié en "Expert"
+    if (req.body.Role === "Expert") {
+      // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
+      req.body.Statut = "En attente";
+    }
+
+    // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true });
+
+    // Si l'utilisateur n'existe pas, retourner une erreur
+    if (!updatedUser) {
+      return res.status(404).send("Utilisateur non trouvé");
+    }
+
+    // Retourner les données de l'utilisateur mises à jour sous forme de réponse JSON
+    res.json({
+      _id: updatedUser._id,
+      Nom: updatedUser.Nom,
+      Prenom: updatedUser.Prenom,
+      Email: updatedUser.Email,
+      Role: updatedUser.Role,
+      Statut: updatedUser.Statut,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour des données utilisateur :", error);
+    res.status(500).send("Erreur lors de la mise à jour des données utilisateur");
+  }
+};
+
 let getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
@@ -295,4 +379,6 @@ module.exports = {
   getAllUsers,
   getPendingExperts,
   getUserById,
+  getUserData,
+  updateUserData ,
 };
