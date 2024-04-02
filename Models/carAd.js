@@ -14,7 +14,7 @@ const carAdSchema = new mongoose.Schema({
   annee: {
     type: Number,
     required: true,
-  },
+  }, 
 
   date: { type: Date, default: Date.now },
 

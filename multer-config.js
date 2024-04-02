@@ -6,22 +6,25 @@ const fs = require("fs");
 const storage = multer.diskStorage({
   // Définir le dossier de destination pour les fichiers téléchargés
   destination: function (req, file, cb) {
+    console.log("_4_");
     const uploadDir = './public/uploads/';
     // Vérifier si le dossier de destination existe, sinon le créer
+console.log("_5_");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
+    console.log("_6_");
     cb(null, uploadDir);
   },
   // Définir le nom du fichier téléchargé
   filename: function (req, file, cb) {
+    console.log("_7_");
     // Utilisez une fonction pour générer un nom de fichier unique
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const extension = path.extname(file.originalname);
     cb(null, uniqueSuffix + extension);
   },
 });
-
 // Limiter les types de fichiers acceptés
 const fileFilter = (req, file, cb) => { 
   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
@@ -30,7 +33,6 @@ const fileFilter = (req, file, cb) => {
     cb(new Error("Format de fichier non supporté. Veuillez télécharger une image au format JPEG ou PNG."));
   }
 };
-
 
 // Créer l'instance de multer avec les options de stockage et de filtrage
 const upload = multer({

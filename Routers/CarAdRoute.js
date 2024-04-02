@@ -2,7 +2,9 @@ const express = require("express");
 const router = express.Router();
 const CarAd = require("../Models/carAd");
 const User = require("../Models/User");
-const upload = require("../multer-config"); // Importer multer-config
+const multer = require("multer");
+const path = require("path");
+// const upload = require("../multer-config"); // Importer multer-config
 
 // Route pour la création d'une nouvelle annonce de voiture
 // const createCarAd = async (req, res) => {
@@ -59,85 +61,138 @@ const upload = require("../multer-config"); // Importer multer-config
 //   }
 // };
 
-const createCarAd = (req, res) => {
-  console.log("_1_");
-  // The file upload middleware should be used separately
-  // This middleware handles the file upload
-  upload.single("photo")(req, res, async (err) => {
-    console.log("_2_");
-    if (err) {
-      console.log("_3_");
-      // Check for specific multer errors
-      if (err.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({ error: "File size too large." });
-      }
-      if (err.code === "LIMIT_UNEXPECTED_FILE") {
-        return res.status(400).json({ error: "Too many files uploaded." });
-      }
-      // Handle other multer errors
-      return res.status(500).json({ error: "_Error uploading file: " + err.message });
-    }
-    // Now you can proceed with your logic after the file has been uploaded
-    // Make sure to check if req.file exists before accessing it
+// Multer configuration for handling file uploads
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, '../public/uploads/');
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + path.extname(file.originalname));
+//   }
+// });
+
+// const upload = multer({ storage: storage });
+
+// const createCarAd = async (req, res) => {
+//   console.log("_1_");
+//   // The file upload middleware should be used separately
+//   // This middleware handles the file upload
+//   // upload.single("photo")(req, res, async (err) => {
+//     // console.log("_2_");
+//     // if (err) {
+//     //   console.log("_3_");
+//     //   // Check for specific multer errors
+//     //   if (err.code === "LIMIT_FILE_SIZE") {
+//     //     return res.status(400).json({ error: "File size too large." });
+//     //   }
+//     //   if (err.code === "LIMIT_UNEXPECTED_FILE") {
+//     //     return res.status(400).json({ error: "Too many files uploaded." });
+//     //   }
+//     //   // Handle other multer errors
+//     //   return res.status(500).json({ error: "_Error uploading file: " + err.message });
+//     // }
+//     // Now you can proceed with your logic after the file has been uploaded
+//     // Make sure to check if req.file exists before accessing it
+//     if (!req.file) {
+//       return res.status(400).json({ error: "No photo uploaded." });
+//     }
+
+//     try {
+//       const {
+//         titre,
+//         description,
+//         prix,
+//         modele,
+//         annee,
+//         marque,
+//         date,
+//         sponsorship,
+//         userId,
+//       } = req.body;
+//       // if (
+//       //   !titre ||
+//       //   !description ||
+//       //   !prix ||
+//       //   !modele ||
+//       //   !annee ||
+//       //   !marque ||
+//       //   !sponsorship ||
+//       //   !date ||
+//       //   !userId
+//       // ) {
+//       //   return res.status(400).json({ error: "All fields are required." });
+//       // }
+
+//       // const user = await User.findById(userId);
+//       // if (!user) {
+//       //   return res.status(404).json({ error: "User not found" });
+//       // }
+
+//       const newCarAd = new CarAd({
+//         titre,
+//         description,
+//         prix,
+//         modele,
+//         annee,
+//         marque,
+//         date,
+//         photo: req.file.filename,
+//         sponsorship,
+//         utilisateur: userId,
+//       });
+
+//       const ad = await newCarAd.save();
+//       console.log("Ad created successfully:", ad);
+//       res.status(201).json(ad);
+//     } catch (error) {
+//       console.error("Error creating ad:", error);
+//       res.status(500).json({ error: "Error creating ad: " + error });
+//     }
+//   // });
+// };
+
+//récupérer toutes les annonces de voiture
+
+const createCarAd = async (req, res) => {
+  try {
+    // Extracting fields from the request body
+    const { titre, description, prix, marque, modele, annee, date } = req.body;
+
+    // Checking if all required fields are provided
     if (!req.file) {
-      return res.status(400).json({ error: "No photo uploaded." });
+      return res.status(400).send("Please provide a photo");
     }
+    const sponsorship = "Gold";
+    // Extracting file details
+    const { filename, path } = req.file;
 
-    try {
-      const {
-        titre,
-        description,
-        prix,
-        modele,
-        annee,
-        marque,
-        date,
-        sponsorship,
-        userId,
-      } = req.body;
-      if (
-        !titre ||
-        !description ||
-        !prix ||
-        !modele ||
-        !annee ||
-        !marque ||
-        !sponsorship ||
-        !date ||
-        !userId
-      ) {
-        return res.status(400).json({ error: "All fields are required." });
-      }
+    // Create a new car ad instance
+    const newCarAd = new CarAd({
+      titre,
+      description,
+      prix,
+      modele,
+      annee,
+      marque,
+      date,
+      photo: filename,
+      sponsorship,
+      // utilisateur: userId,
+    });
 
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
+    // Save the new car ad to the database
+    const ad = await newCarAd.save();
 
-      const newCarAd = new CarAd({
-        titre,
-        description,
-        prix,
-        modele,
-        annee,
-        marque,
-        date,
-        photo: req.file.filename,
-        sponsorship,
-        utilisateur: userId,
-      });
+    console.log("Ad created successfully:", ad);
 
-      const ad = await newCarAd.save();
-      console.log("Ad created successfully:", ad);
-      res.status(201).json(ad);
-    } catch (error) {
-      console.error("Error creating ad:", error);
-      res.status(500).json({ error: "Error creating ad: " + error });
-    }
-  });
+    // Send a success response
+    res.status(201).json(ad);
+  } catch (error) {
+    console.error("Error creating car ad:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-// récupérer toutes les annonces de voiture
 let getAllCarAds = async (req, res) => {
   try {
     const ads = await CarAd.find();
@@ -236,7 +291,8 @@ let getCarAdById = async (req, res) => {
 // rechercher des annonces de voiture en fonction de certains critères
 let searchCarAds = async (req, res) => {
   try {
-    const { marque, modele, anneeFrom, anneeTo, prixFrom, prixTo, adresse } = req.query;
+    const { marque, modele, anneeFrom, anneeTo, prixFrom, prixTo, adresse } =
+      req.query;
     let query = {};
 
     // Filtrer par marque
@@ -276,7 +332,10 @@ let searchCarAds = async (req, res) => {
     const ads = await CarAd.find(query);
     res.status(200).json(ads); // Renvoie les annonces correspondantes
   } catch (error) {
-    console.error("Erreur lors de la recherche des annonces de voiture :", error);
+    console.error(
+      "Erreur lors de la recherche des annonces de voiture :",
+      error
+    );
     res.status(500).json({
       error: "Erreur lors de la recherche des annonces de voiture " + error,
     });
