@@ -156,8 +156,9 @@ const path = require("path");
 const createCarAd = async (req, res) => {
   try {
     // Extracting fields from the request body
-    const { titre, description, prix, marque, modele, annee, date } = req.body;
-
+    const { titre, description, prix, marque, modele, annee, date, userId } =
+      req.body;
+    console.log(req.body);
     // Checking if all required fields are provided
     if (!req.file) {
       return res.status(400).send("Please provide a photo");
@@ -177,7 +178,7 @@ const createCarAd = async (req, res) => {
       date,
       photo: filename,
       sponsorship,
-      // utilisateur: userId,
+      utilisateur: userId,
     });
 
     // Save the new car ad to the database

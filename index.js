@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
-const upload = require('./multer-config');
+const upload = require("./multer-config");
 const verifyJWT = require("./middleware/verifyJWT");
 
 // Import controllers
@@ -22,7 +22,13 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(
+  cors({
+    credentials: true,
+    origin: ["http://localhost:3000", "http://localhost:3001"],
+  })
+);
+// app.use(cors());
 app.use(cookieParser());
 
 // Logging middleware function
@@ -36,8 +42,6 @@ const logRequest = (req, res, next) => {
 
 // Mount the logging middleware
 app.use(logRequest);
-
-
 
 //* authentication routes
 app.post("/login", userController.login);
@@ -54,7 +58,7 @@ app.get("/getUser/:id", userController.getUserById);
 
 //* car routes
 //app.post("/carAds", carAdController.createCarAd);
-app.use('/images', express.static('public/uploads/'));
+app.use("/images", express.static("public/uploads/"));
 app.post("/carAds", upload.single("photo"), carAdController.createCarAd);
 
 app.get("/carAds", carAdController.getAllCarAds);
