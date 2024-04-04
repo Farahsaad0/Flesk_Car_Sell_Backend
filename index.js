@@ -13,6 +13,7 @@ const expertController = require("./Routers/ExpertRoute");
 const adminController = require("./Routers/AdminRoute");
 const logoutController = require("./controllers/logoutController");
 const refreshTokenController = require("./controllers/refreshTokenController");
+const subscriptionController = require("./controllers/subscriptionController");
 
 dotenv.config();
 
@@ -71,10 +72,15 @@ app.get("/experts", expertController.getAllExperts);
 
 app.put("/:id/bloquer", expertController.bloquerExpert);
 
+//* Subscription routes
+app.post("/createSubscription", verifyJWT, subscriptionController.createSubscription);
+app.get("/getAllSubscriptions", subscriptionController.getAllSubscriptions);
+
 //* admin routes
 app.post("/adminLogin", adminController.adminLogin);
 app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
+app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/users/:id/block", verifyJWT, userController.blockUser);
 app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);

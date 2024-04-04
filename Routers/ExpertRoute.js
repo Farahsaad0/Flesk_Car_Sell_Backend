@@ -94,6 +94,31 @@ let approuverExpert = async (req, res) => {
   }
 };
 
+let rejeterExpert = async (req, res) => {
+  try {
+    const expert = await Expert.findByIdAndUpdate(
+      req.params.id,
+      { approuvé: false },
+      { new: true }
+    );
+    if (!expert) {
+      return res.status(404).json({ message: "Expert non trouvé." });
+    }
+    res.json(expert);
+
+    // Update the corresponding User's Statut to "Rejeté"
+    await User.findOneAndUpdate(
+      { ExpertId: req.params.id },
+      { Statut: "Rejeté" }
+    );
+  } catch (error) {
+    console.error("Erreur lors de l'approbation de l'expert :", error);
+    res
+      .status(500)
+      .json({ message: "Erreur lors de l'approbation de l'expert." });
+  }
+};
+
 // Fonction pour mettre à jour un expert
 let updateExpert = async (req, res) => {
   try {
@@ -158,4 +183,5 @@ module.exports = {
   approuverExpert,
   updateExpert,
   deleteExpert,
+  rejeterExpert,
 };

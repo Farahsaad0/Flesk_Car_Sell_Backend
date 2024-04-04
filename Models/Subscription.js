@@ -11,20 +11,20 @@ const subscriptionSchema = new Schema({
     required: true,
   },
   duration: {
-    type: String, // You can adjust this according to your needs, could be in days, months, years, etc.
+    type: Number, 
     required: true,
   },
   features: {
-    type: [String], // Array of features included in the subscription plan
+    type: [String], 
     required: true,
   },
   isActive: {
     type: Boolean,
-    default: true, // Indicates whether the subscription plan is currently active or not
+    default: true,
   },
   createdAt: {
     type: Date,
-    default: Date.now, // Timestamp of when the subscription plan was created
+    default: Date.now, 
   },
 });
 

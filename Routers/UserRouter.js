@@ -374,17 +374,20 @@ let getPendingExperts = async (req, res) => {
 
 let blockUser = async (req, res) => {
   try {
-    const userId = req.params.id;
+    // const userId = req.params.id;
 
-    const user = await User.findById(userId);
+    // const user = await User.findById(userId);
+    await User.findOneAndUpdate(
+      { ExpertId: req.params.id },
+      { Statut: "Bloqué" }
+    );
+    // if (!user) {
+    //   return res.status(404).json({ message: "User not found." });
+    // }
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
+    // user.Statut = "Bloqué"; 
 
-    user.Statut = "Bloqué"; 
-
-    await user.save();
+    // await user.save();
 
     res.status(200).json({ message: "User blocked successfully." });
   } catch (error) {
