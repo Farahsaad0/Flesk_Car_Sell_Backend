@@ -207,7 +207,7 @@ let getAllCarAds = async (req, res) => {
 };
 
 //  modifier une annonce de voiture
-let updateCarAd = async (req, res) => {
+const updateCarAd = async (req, res) => {
   try {
     const {
       titre,
@@ -217,10 +217,12 @@ let updateCarAd = async (req, res) => {
       modele,
       annee,
       date,
-      photo,
       sponsorship,
     } = req.body;
     const { id } = req.params;
+
+    // Vérifier si une photo a été téléchargée
+    const photo = req.file ? req.file.filename : null;
 
     const ad = await CarAd.findByIdAndUpdate(
       id,
@@ -232,7 +234,7 @@ let updateCarAd = async (req, res) => {
         modele,
         annee,
         date,
-        photo,
+        photo, // Utiliser la photo téléchargée
         sponsorship,
       },
       { new: true }
@@ -251,6 +253,7 @@ let updateCarAd = async (req, res) => {
       .json({ error: "Erreur lors de la modification de l'annonce " + error });
   }
 };
+
 // supprimer une annonce de voiture
 let deleteCarAd = async (req, res) => {
   try {
