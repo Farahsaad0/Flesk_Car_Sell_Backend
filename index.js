@@ -61,9 +61,10 @@ app.get("/getUser/:id", userController.getUserById);
 //app.post("/carAds", carAdController.createCarAd);
 app.use("/images", express.static("public/uploads/"));
 app.post("/carAds", upload.single("photo"), carAdController.createCarAd);
+app.get('/getCarAdByUserId/:userId', carAdController.getCarAdByUserId);
 
 app.get("/carAds", carAdController.getAllCarAds);
-app.put("/carAds/:id", carAdController.updateCarAd);
+app.put("/:id", upload.single("photo"), carAdController.updateCarAd);
 app.delete("/carAds/:id", carAdController.deleteCarAd);
 // app.get("/carAds/:id", carAdController.getCarAdById);
 app.get("/carAds/search", carAdController.searchCarAds);

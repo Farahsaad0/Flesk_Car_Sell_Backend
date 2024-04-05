@@ -207,7 +207,7 @@ let getAllCarAds = async (req, res) => {
 };
 
 //  modifier une annonce de voiture
-let updateCarAd = async (req, res) => {
+const updateCarAd = async (req, res) => {
   try {
     const {
       titre,
@@ -217,10 +217,12 @@ let updateCarAd = async (req, res) => {
       modele,
       annee,
       date,
-      photo,
       sponsorship,
     } = req.body;
     const { id } = req.params;
+
+    // Vérifier si une photo a été téléchargée
+    const photo = req.file ? req.file.filename : null;
 
     const ad = await CarAd.findByIdAndUpdate(
       id,
@@ -232,7 +234,7 @@ let updateCarAd = async (req, res) => {
         modele,
         annee,
         date,
-        photo,
+        photo, // Utiliser la photo téléchargée
         sponsorship,
       },
       { new: true }
@@ -251,6 +253,7 @@ let updateCarAd = async (req, res) => {
       .json({ error: "Erreur lors de la modification de l'annonce " + error });
   }
 };
+
 // supprimer une annonce de voiture
 let deleteCarAd = async (req, res) => {
   try {
@@ -286,6 +289,21 @@ let getCarAdById = async (req, res) => {
     res
       .status(500)
       .json({ error: "Erreur lors de la récupération de l'annonce " + error });
+  }
+};
+
+
+// récupérer toutes les annonces de voiture par l'ID de l'utilisateur
+let getCarAdByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Rechercher toutes les annonces de voiture de l'utilisateur spécifié
+    const ads = await CarAd.find({ utilisateur: userId });
+    res.status(200).json(ads); // Renvoie les annonces correspondantes
+  } catch (error) {
+    console.error("Erreur lors de la récupération des annonces par utilisateur :", error);
+    res.status(500).json({ error: "Erreur lors de la récupération des annonces par utilisateur " + error });
   }
 };
 
@@ -350,4 +368,5 @@ module.exports = {
   deleteCarAd,
   getCarAdById,
   searchCarAds,
+  getCarAdByUserId,
 };
