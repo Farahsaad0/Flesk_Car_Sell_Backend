@@ -75,6 +75,8 @@ app.put("/:id/bloquer", expertController.bloquerExpert);
 //* Subscription routes
 app.post("/createSubscription", verifyJWT, subscriptionController.createSubscription);
 app.get("/getAllSubscriptions", subscriptionController.getAllSubscriptions);
+app.get("/getOneSubscription/:id", subscriptionController.getOneSubscription);
+app.put("/updateSubscription/:id", verifyJWT, subscriptionController.updateSubscription);
 
 //* admin routes
 app.post("/adminLogin", adminController.adminLogin);
