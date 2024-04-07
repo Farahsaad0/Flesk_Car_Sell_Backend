@@ -221,25 +221,34 @@ const updateCarAd = async (req, res) => {
     } = req.body;
     const { id } = req.params;
 
-    // Vérifier si une photo a été téléchargée
+    // Check if a photo has been uploaded
     const photo = req.file ? req.file.filename : null;
 
+    // Find the existing car ad by ID and update its details
+    let updatedDetails = {
+      titre,
+      description,
+      prix,
+      marque,
+      modele,
+      annee,
+      date,
+      sponsorship,
+    };
+
+    // Update the photo only if a new one is provided
+    if (photo) {
+      updatedDetails.photo = photo;
+    }
+
+    // Find and update the car ad in the database
     const ad = await CarAd.findByIdAndUpdate(
       id,
-      {
-        titre,
-        description,
-        prix,
-        marque,
-        modele,
-        annee,
-        date,
-        photo, // Utiliser la photo téléchargée
-        sponsorship,
-      },
+      updatedDetails,
       { new: true }
     );
 
+    // Check if the car ad exists
     if (!ad) {
       return res.status(404).json({ error: "Annonce non trouvée" });
     }
@@ -253,6 +262,7 @@ const updateCarAd = async (req, res) => {
       .json({ error: "Erreur lors de la modification de l'annonce " + error });
   }
 };
+
 
 // supprimer une annonce de voiture
 let deleteCarAd = async (req, res) => {

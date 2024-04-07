@@ -10,6 +10,7 @@ let createSubscription = async (req, res) => {
       duration,
       features,
       isActive,
+      // themeColor,
     });
 
     const savedSubscription = await newSubscription.save();
@@ -17,7 +18,7 @@ let createSubscription = async (req, res) => {
     res.status(201).json(savedSubscription);
   } catch (error) {
     console.error("Error creating subscription:", error);
-    res.status(500).json({ error: "Failed to create subscription" });
+    res.status(500).json({ error: "Failed to create subscription " + error });
   }
 };
 
@@ -70,9 +71,27 @@ let updateSubscription = async (req, res) => {
   }
 };
 
+let deleteSubscription = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedSubscription  = await Subscription.findByIdAndDelete(id);
+
+    if (!deletedSubscription ) {
+      return res.status(404).json({ error: "Subscription not found" });
+    }
+    console.log("Aonnement supprimée avec succès :", deletedSubscription );
+    res.status(200).json(deletedSubscription );
+  } catch (error) {
+    console.error("Error DELETEING subscription:", error);
+    res.status(500).json({ error: "Failed to DELETE subscription" });
+  }
+};
+
 module.exports = {
   createSubscription,
   getAllSubscriptions,
   getOneSubscription,
   updateSubscription,
+  deleteSubscription,
 };

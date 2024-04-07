@@ -18,6 +18,10 @@ const subscriptionSchema = new Schema({
     type: [String], 
     required: true,
   },
+  // themeColor: {
+  //   type: String,
+  //   required: true,
+  // },
   isActive: {
     type: Boolean,
     default: true,

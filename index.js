@@ -66,7 +66,7 @@ app.get('/getCarAdByUserId/:userId', carAdController.getCarAdByUserId);
 app.get("/carAds", carAdController.getAllCarAds);
 app.put("/:id", upload.single("photo"), carAdController.updateCarAd);
 app.delete("/carAds/:id", carAdController.deleteCarAd);
-// app.get("/carAds/:id", carAdController.getCarAdById);
+app.get("/carAds/:id", carAdController.getCarAdById);
 app.get("/carAds/search", carAdController.searchCarAds);
 app.put("/:id/specialite", expertController.updateSpecialite);
 app.get("/experts", expertController.getAllExperts);
@@ -74,10 +74,11 @@ app.get("/experts", expertController.getAllExperts);
 app.put("/:id/bloquer", expertController.bloquerExpert);
 
 //* Subscription routes
-app.post("/createSubscription", verifyJWT, subscriptionController.createSubscription);
-app.get("/getAllSubscriptions", subscriptionController.getAllSubscriptions);
-app.get("/getOneSubscription/:id", subscriptionController.getOneSubscription);
-app.put("/updateSubscription/:id", verifyJWT, subscriptionController.updateSubscription);
+app.post("/subscription", verifyJWT, subscriptionController.createSubscription);
+app.get("/subscriptions", subscriptionController.getAllSubscriptions);
+app.get("/subscription/:id", subscriptionController.getOneSubscription);
+app.put("/subscription/:id", verifyJWT, subscriptionController.updateSubscription);
+app.delete("/subscription/:id", verifyJWT, subscriptionController.deleteSubscription);
 
 //* admin routes
 app.post("/adminLogin", adminController.adminLogin);
@@ -89,7 +90,7 @@ app.put("/users/:id/block", verifyJWT, userController.blockUser);
 app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 
 app.put("/:id", expertController.updateExpert);
-
+ 
 app.delete("/:id", expertController.deleteExpert);
 
 app.get("/", (req, res) => {

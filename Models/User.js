@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
     default: "En attente",
   },
 
-  bloqué: Boolean,
+  // bloqué: Boolean,
 
   refreshToken: String,
 });
