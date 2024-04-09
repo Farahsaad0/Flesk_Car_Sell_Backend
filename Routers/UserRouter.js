@@ -276,51 +276,42 @@ let updateUserData = async (req, res) => {
   }
 };
 
-let getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
-    const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
+    const search = req.query.search || "";
+    const sortField = req.query.sortField || "JoinDate"; 
+    const sortOrder = parseInt(req.query.sortOrder) || -1; 
+    const filter = req.query.filter || "all";
 
-    const totalUsers = await User.countDocuments(); // Count total number of users
-    const totalPages = Math.ceil(totalUsers / perPage); // Calculate total number of pages
+    const query = {};
+    if (search) {
+      query["$or"] = [
+        { Nom: { $regex: search, $options: "i" } }, 
+        { Prenom: { $regex: search, $options: "i" } }, 
+        { Email: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (filter !== "all") {
+      query.Statut = filter; // Filter by status
+    }
 
-    const users = await User.find()
-      .skip((page - 1) * perPage) // Skip users based on the current page number and items per page
-      .limit(perPage); // Limit the number of users returned per page
+    const totalUsers = await User.countDocuments(query);
+    const totalPages = Math.ceil(totalUsers / perPage);
 
-    res.status(200).json({ users, totalPages }); // Return users data along with total number of pages
+    const users = await User.find(query)
+      .sort({ [sortField]: sortOrder }) // Sort based on the provided field and order
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+
+    res.status(200).json({ users, totalPages });
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ error: "Error fetching users: " + error });
+    res.status(500).json({ error: "Error fetching users: " + error.message });
   }
 };
 
-// let getPendingExperts = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1; // Get the requested page number from the query parameters
-//     const perPage = parseInt(req.query.perPage) || 10; // Get the number of items per page from the query parameters, default to 10 if not provided
-
-//     const totalExperts = await User.countDocuments({ Verified: false }); // Count total number of pending experts
-//     const totalPages = Math.ceil(totalExperts / perPage); // Calculate total number of pages
-
-//     const pendingExperts = await User.find({ Verified: false })
-//       .skip((page - 1) * perPage) // Skip experts based on the current page number and items per page
-//       .limit(perPage); // Limit the number of experts returned per page
-
-//     res.status(200).json({ pendingExperts, totalPages }); // Send pending experts and total pages in the response
-//   } catch (error) {
-//     console.error(
-//       "Erreur lors de la récupération des experts en attente :",
-//       error
-//     );
-//     res
-//       .status(500)
-//       .json({
-//         error:
-//           "Erreur lors de la récupération des experts en attente : " + error,
-//       });
-//   }
-// };
 let getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
