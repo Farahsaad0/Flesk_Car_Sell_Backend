@@ -71,7 +71,7 @@ app.get("/carAds/search", carAdController.searchCarAds);
 app.put("/:id/specialite", expertController.updateSpecialite);
 app.get("/experts", expertController.getAllExperts);
 
-app.put("/:id/bloquer", expertController.bloquerExpert);
+// app.put("/:id/bloquer", expertController.bloquerExpert);
 
 //* Subscription routes
 app.post("/subscription", verifyJWT, subscriptionController.createSubscription);

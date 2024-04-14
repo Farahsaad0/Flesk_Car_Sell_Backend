@@ -7,14 +7,12 @@ let adminLogin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Find the admin user by email
     const adminUser = await User.findOne({ Email: email });
 
     if (!adminUser) {
       return res.status(404).json({ message: "Admin user not found." });
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, adminUser.Password);
 
     if (!isPasswordValid) {
@@ -40,7 +38,6 @@ let adminLogin = async (req, res) => {
 
     const { Password, ...userDetails } = adminUser.toObject();
 
-    // Set cookie with refresh token
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,

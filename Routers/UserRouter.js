@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const User = require("../Models/User");
 const ExpertProfile = require("../Models/expert");
 const { generateLogToken } = require("../utils");
-const { verifyToken } =require("../utils");
+const { verifyToken } = require("../utils");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
 
@@ -32,6 +32,9 @@ let register = async (req, res) => {
 
     await newUser.save();
 
+    const subject = "Code de vérification pour votre inscription";
+    const message = `Nous sommes ravis de vous voir sur le point de finaliser votre inscription! Votre code de vérification est le suivant : ${verificationCode} . Utilisez ce code pour compléter le processus d'inscription.`;
+
     if (Role.toLowerCase() === "expert") {
       const newExpert = new ExpertProfile({
         spécialité: Spécialité,
@@ -41,10 +44,10 @@ let register = async (req, res) => {
       await newUser.save();
 
       // Envoi du code de vérification par e-mail pour les experts
-      await sendVerificationEmail(newUser.Email, verificationCode);
+      await emailSander(newUser.Email, subject, message);
     } else {
       // Envoi du code de vérification par e-mail pour les utilisateurs standards
-      await sendVerificationEmail(newUser.Email, verificationCode);
+      await emailSander(newUser.Email, subject, message);
     }
 
     res.status(201).json({ user: newUser });
@@ -57,10 +60,7 @@ let register = async (req, res) => {
 };
 
 // Fonction pour envoyer un e-mail de vérification
-const sendVerificationEmail = async (email, code) => {
-  const subject = "Code de vérification pour votre inscription";
-  const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
-
+const emailSander = async (email, subject, message) => {
   try {
     await sendEmail(email, subject, message);
     console.log("E-mail de vérification envoyé avec succès");
@@ -179,6 +179,7 @@ let login = async (req, res) => {
       Prenom: user.Prenom,
       Email: user.Email,
       Role: user.Role,
+      Verified: user.Verified,
       token: token,
       Statut: user.Statut,
     });
@@ -188,13 +189,11 @@ let login = async (req, res) => {
   }
 };
 
-
-
 // Définition de la fonction pour renvoyer les données de l'utilisateur
 let getUserData = async (req, res) => {
   try {
     // Extraire le token d'authentification de l'en-tête de la requête
-    const token = req.headers.authorization.split(' ')[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+    const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
 
     // Vérifier et décoder le token
     const decodedToken = verifyToken(token);
@@ -220,17 +219,20 @@ let getUserData = async (req, res) => {
       Statut: user.Statut,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération des données utilisateur :", error);
-    res.status(500).send("Erreur lors de la récupération des données utilisateur");
+    console.error(
+      "Erreur lors de la récupération des données utilisateur :",
+      error
+    );
+    res
+      .status(500)
+      .send("Erreur lors de la récupération des données utilisateur");
   }
 };
-
-
 
 let updateUserData = async (req, res) => {
   try {
     // Extraire le token d'authentification de l'en-tête de la requête
-    const token = req.headers.authorization.split(' ')[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+    const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
 
     // Vérifier et décoder le token
     const decodedToken = verifyToken(token);
@@ -254,7 +256,9 @@ let updateUserData = async (req, res) => {
     }
 
     // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
-    const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
+      new: true,
+    });
 
     // Si l'utilisateur n'existe pas, retourner une erreur
     if (!updatedUser) {
@@ -271,8 +275,13 @@ let updateUserData = async (req, res) => {
       Statut: updatedUser.Statut,
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour des données utilisateur :", error);
-    res.status(500).send("Erreur lors de la mise à jour des données utilisateur");
+    console.error(
+      "Erreur lors de la mise à jour des données utilisateur :",
+      error
+    );
+    res
+      .status(500)
+      .send("Erreur lors de la mise à jour des données utilisateur");
   }
 };
 
@@ -281,15 +290,15 @@ const getAllUsers = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
     const search = req.query.search || "";
-    const sortField = req.query.sortField || "JoinDate"; 
-    const sortOrder = parseInt(req.query.sortOrder) || -1; 
+    const sortField = req.query.sortField || "JoinDate";
+    const sortOrder = parseInt(req.query.sortOrder) || -1;
     const filter = req.query.filter || "all";
 
     const query = {};
     if (search) {
       query["$or"] = [
-        { Nom: { $regex: search, $options: "i" } }, 
-        { Prenom: { $regex: search, $options: "i" } }, 
+        { Nom: { $regex: search, $options: "i" } },
+        { Prenom: { $regex: search, $options: "i" } },
         { Email: { $regex: search, $options: "i" } },
       ];
     }
@@ -364,26 +373,32 @@ let getPendingExperts = async (req, res) => {
 };
 
 let blockUser = async (req, res) => {
+  const subject = "Mise à jour de votre compte";
+  const message =
+    "Nous vous informons que votre compte utilisateur a été bloqué. Veuillez noter que cette mesure a été prise pour des raisons de sécurité ou de non-conformité avec nos conditions d'utilisation.";
+
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
 
     // const user = await User.findById(userId);
-    const user = await User.findOneAndUpdate(
-      { _id: req.params.id },
-      { Statut: "Bloqué" }
-    );
+    const user = await User.findByIdAndUpdate(userId, {
+      Statut: "Bloqué",
+    });
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
-    // user.Statut = "Bloqué"; 
+    // user.Statut = "Bloqué";
 
     // await user.save();
+    await emailSander(user.Email, subject, message);
 
-    res.status(200).json({ message: "User blocked successfully." });
+    res.status(200).json({ message: "Utilisateur bloqué avec succès." });
   } catch (error) {
-    console.error("Error blocking user:", error);
-    res.status(500).json({ error: "Error blocking user: " + error });
+    console.error("Erreur lors du blocage de l'utilisateur : ", error);
+    res
+      .status(500)
+      .json({ error: "Erreur lors du blocage de l'utilisateur : " + error });
   }
 };
 
@@ -397,7 +412,7 @@ let unblockUser = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    user.Statut = "Approuvé"; 
+    user.Statut = "Approuvé";
 
     await user.save();
 
@@ -416,7 +431,7 @@ module.exports = {
   getPendingExperts,
   getUserById,
   getUserData,
-  updateUserData ,
+  updateUserData,
   blockUser,
-  unblockUser, 
+  unblockUser,
 };
