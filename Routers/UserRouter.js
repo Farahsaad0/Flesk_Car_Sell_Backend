@@ -10,7 +10,8 @@ const uuid = require("uuid");
 // Route de création d'utilisateur
 let register = async (req, res) => {
   try {
-    let { Email, Nom, Prenom, Password, Role, Spécialité } = req.body;
+    let { Email, Nom, Prenom, Password, Role, Spécialité, prix, experience } =
+      req.body;
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ Email });
@@ -38,6 +39,8 @@ let register = async (req, res) => {
     if (Role.toLowerCase() === "expert") {
       const newExpert = new ExpertProfile({
         spécialité: Spécialité,
+        prix: prix,
+        experience: experience,
       });
       await newExpert.save();
       newUser.ExpertId = newExpert._id;

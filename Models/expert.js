@@ -6,11 +6,21 @@ const expertSchema = new mongoose.Schema({
     default: false,
   },
 
-
   spécialité: {
     type: String,
     required: true,
   },
+
+  prix: {
+    type: String,
+    required: true,
+  },
+
+  experience: {
+    type: String,
+    required: true,
+  },
+
 
 });
 

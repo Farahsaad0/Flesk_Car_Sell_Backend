@@ -43,15 +43,16 @@ const userSchema = new mongoose.Schema({
     ref: "ExpertProfile",
   },
 
-  JoinDate: { type: Date, default: Date.now },
+  JoinDate: {
+    type: Date,
+    default: Date.now,
+  },
 
   Statut: {
     type: String,
     enum: ["En attente", "Approuvé", "Rejeté", "Bloqué"],
     default: "En attente",
   },
-
-  // bloqué: Boolean,
 
   refreshToken: String,
 });

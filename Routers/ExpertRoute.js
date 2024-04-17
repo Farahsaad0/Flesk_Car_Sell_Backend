@@ -38,6 +38,34 @@ let getAllExperts = async (req, res) => {
   }
 };
 
+let getApprovedExperts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 50;
+
+    const totalExperts = await User.countDocuments({
+      Role: "Expert",
+      Statut: "Approuvé",
+    });
+    const totalPages = Math.ceil(totalExperts / perPage);
+
+    const approvedExperts = await User.find({
+      Role: "Expert",
+      Statut: "Approuvé",
+    })
+      .populate("ExpertId") // Populate the ExpertId field to fetch related data from the expert collection
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+
+    res.status(200).json({ approvedExperts, totalPages });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des experts :", error);
+    res.status(500).json({
+      error: "Erreur lors de la récupération des experts : " + error,
+    });
+  }
+};
+
 // Bloquer un expert
 // let bloquerExpert = async (req, res) => {
 //   const subject = "mise a jour de votre compte";
@@ -53,7 +81,7 @@ let getAllExperts = async (req, res) => {
 //       return res.status(404).json({ message: "Expert non trouvé." });
 //     }
 //     res.json(expert);
-    
+
 //     await emailSander(expert.Email, subject, message)
 //   } catch (error) {
 //     console.error("Erreur lors du blocage de l'expert :", error);
@@ -93,10 +121,10 @@ let approuverExpert = async (req, res) => {
     // Update the corresponding User's Statut to "Approuvé"
     const updatedExpert = await User.findOneAndUpdate(
       { ExpertId: req.params.id },
-      { Statut: "Approuvé" } 
+      { Statut: "Approuvé" }
     );
 
-    await emailSander(updatedExpert.Email, subject, message)
+    await emailSander(updatedExpert.Email, subject, message);
   } catch (error) {
     console.error("Erreur lors de l'approbation de l'expert :", error);
     res
@@ -107,7 +135,8 @@ let approuverExpert = async (req, res) => {
 
 let rejeterExpert = async (req, res) => {
   const subject = "mise a jour de votre demand d'un compte expert";
-  const message = "Nous tenons à vous informer que votre demande a été rejetée. Nous comprenons que cela puisse être décevant, mais nous vous encourageons à ne pas vous inquiéter. Vous pouvez toujours accéder à votre compte et l'utiliser comme tout autre utilisateur.";
+  const message =
+    "Nous tenons à vous informer que votre demande a été rejetée. Nous comprenons que cela puisse être décevant, mais nous vous encourageons à ne pas vous inquiéter. Vous pouvez toujours accéder à votre compte et l'utiliser comme tout autre utilisateur.";
 
   try {
     const expert = await Expert.findByIdAndUpdate(
@@ -125,8 +154,8 @@ let rejeterExpert = async (req, res) => {
       { ExpertId: req.params.id },
       { Statut: "Rejeté" }
     );
-    
-    await emailSander(updatedExpert.Email, subject, message)
+
+    await emailSander(updatedExpert.Email, subject, message);
   } catch (error) {
     console.error("Erreur lors de l'approbation de l'expert :", error);
     res
@@ -216,4 +245,5 @@ module.exports = {
   updateExpert,
   deleteExpert,
   rejeterExpert,
+  getApprovedExperts,
 };
