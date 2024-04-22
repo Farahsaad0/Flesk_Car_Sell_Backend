@@ -297,32 +297,32 @@ const updateUserData = async (req, res) => {
     }
 
     // Extraire le token d'authentification de l'en-tête de la requête
-    const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+    // const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
 
     // Vérifier et décoder le token
-    const decodedToken = verifyToken(token);
+    // const decodedToken = verifyToken(token);
 
     // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
-    const userId = decodedToken._id;
+    const userId = req.params.id;
 
     // Vérifier si le nouveau mot de passe est présent dans les données de la requête
-    if (req.body.Password) {
+    // if (req.body.Password) {
       // Hacher le nouveau mot de passe
-      const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
+      // const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
 
       // Remplacer le mot de passe en texte clair par le mot de passe haché dans les données de la requête
-      req.body.Password = hashedPassword;
-    }
+      // req.body.Password = hashedPassword;
+    // }
 
     // Vérifier si le rôle a été modifié en "Expert"
-    if (req.body.Role === "Expert") {
+    // if (req.body.Role === "Expert") {
       // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
-      req.body.Statut = "En attente";
-    }
+      // req.body.Statut = "En attente";
+    // }
 
     // Si une URL de photo existe, ajoutez-la aux données de la requête
     if (photo) {
-      req.body.photo = photo;
+      req.body.photo = photo; 
     }
 
     // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
