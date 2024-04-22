@@ -10,7 +10,7 @@ const uuid = require("uuid");
 // Route de création d'utilisateur
 let register = async (req, res) => {
   try {
-    let { Email, Nom, Prenom, Password, Role, Spécialité, prix, experience } =
+    let { Email, Nom, Prenom, Password, Role, Numéro , Adresse , Spécialité, prix, experience } =
       req.body;
 
     // Vérifier si l'utilisateur existe déjà
@@ -27,6 +27,8 @@ let register = async (req, res) => {
       Email: Email,
       Password: await bcrypt.hash(Password, 10),
       Role: Role,
+      Numéro : Numéro,
+      Adresse : Adresse,
       Verified_code: verificationCode,
       Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé",
     });
@@ -182,6 +184,8 @@ let login = async (req, res) => {
       Prenom: user.Prenom,
       Email: user.Email,
       Role: user.Role,
+      Numéro : user.Numéro,
+      Adresse : user.Adresse,
       Verified: user.Verified,
       token: token,
       Statut: user.Statut,
@@ -218,6 +222,8 @@ let getUserData = async (req, res) => {
       Nom: user.Nom,
       Prenom: user.Prenom,
       Email: user.Email,
+      Numéro : user.Numéro,
+      Adresse : user.Adresse,
       Role: user.Role,
       Statut: user.Statut,
     });
@@ -232,7 +238,7 @@ let getUserData = async (req, res) => {
   }
 };
 
-let updateUserData = async (req, res) => {
+/*let updateUserData = async (req, res) => {
   try {
     // Extraire le token d'authentification de l'en-tête de la requête
     const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
@@ -286,7 +292,77 @@ let updateUserData = async (req, res) => {
       .status(500)
       .send("Erreur lors de la mise à jour des données utilisateur");
   }
+}; */
+
+const updateUserData = async (req, res) => {
+  try {
+    // Vérifier si une photo a été téléchargée
+    let photo;
+    if (req.file) {
+      // Stocker l'URL de la photo dans une variable
+      photo = req.file.filename;
+    }
+
+    // Extraire le token d'authentification de l'en-tête de la requête
+    const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
+
+    // Vérifier et décoder le token
+    const decodedToken = verifyToken(token);
+
+    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
+    const userId = decodedToken._id;
+
+    // Vérifier si le nouveau mot de passe est présent dans les données de la requête
+    if (req.body.Password) {
+      // Hacher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
+
+      // Remplacer le mot de passe en texte clair par le mot de passe haché dans les données de la requête
+      req.body.Password = hashedPassword;
+    }
+
+    // Vérifier si le rôle a été modifié en "Expert"
+    if (req.body.Role === "Expert") {
+      // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
+      req.body.Statut = "En attente";
+    }
+
+    // Si une URL de photo existe, ajoutez-la aux données de la requête
+    if (photo) {
+      req.body.photo = photo;
+    }
+
+    // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
+      new: true,
+    });
+
+    // Si l'utilisateur n'existe pas, retourner une erreur
+    if (!updatedUser) {
+      return res.status(404).send("Utilisateur non trouvé");
+    }
+
+    // Retourner les données de l'utilisateur mises à jour sous forme de réponse JSON
+    res.json({
+      _id: updatedUser._id,
+      Nom: updatedUser.Nom,
+      Prenom: updatedUser.Prenom,
+      Email: updatedUser.Email,
+      Role: updatedUser.Role,
+      Statut: updatedUser.Statut,
+      photo: updatedUser.photo, // Retourner l'URL de la photo mise à jour
+    });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la mise à jour des données utilisateur :",
+      error
+    );
+    res
+      .status(500)
+      .send("Erreur lors de la mise à jour des données utilisateur");
+  }
 };
+
 
 const getAllUsers = async (req, res) => {
   try {
@@ -426,6 +502,10 @@ let unblockUser = async (req, res) => {
   }
 };
 
+
+
+
+
 module.exports = {
   login,
   register,
@@ -437,4 +517,5 @@ module.exports = {
   updateUserData,
   blockUser,
   unblockUser,
+  
 };

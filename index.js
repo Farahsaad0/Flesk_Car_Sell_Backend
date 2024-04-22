@@ -15,7 +15,7 @@ const logoutController = require("./controllers/logoutController");
 const refreshTokenController = require("./controllers/refreshTokenController");
 const subscriptionController = require("./controllers/subscriptionController");
 const jobController = require("./controllers/jobController");
-
+const contactController = require ("./Routers/ContactRoute");
 
 dotenv.config();
 
@@ -58,8 +58,11 @@ app.get("/refresh", refreshTokenController.handleRefreshToken);
 
 
 app.get("/getUserData", userController.getUserData);
-app.put("/updateUserData/:id", userController.updateUserData);
+//app.put("/updateUserData/:id", userController.updateUserData);
+app.put("/updateUserData/:id", upload.single("photo"),userController.updateUserData);
 
+//* route contact 
+app.post("/contact",contactController.contact);
 
 app.get("/getAllUsers", verifyJWT, userController.getAllUsers);
 app.get("/getUser/:id", userController.getUserById);
@@ -73,7 +76,7 @@ app.get('/getCarAdByUserId/:userId', carAdController.getCarAdByUserId);
 app.get("/carAds", carAdController.getAllCarAds);
 app.put("/:id", upload.single("photo"), carAdController.updateCarAd);
 app.delete("/carAds/:id", carAdController.deleteCarAd);
-app.get("/carAds/:id", carAdController.getCarAdById);
+//app.get("/carAds/:id", carAdController.getCarAdById);(importannnnnnttttt)
 app.get("/carAds/search", carAdController.searchCarAds);
 app.put("/:id/specialite", expertController.updateSpecialite);
 // app.get("/experts", expertController.getAllExperts);
