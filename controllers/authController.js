@@ -2,20 +2,17 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
 
-
-let Login = async (req, res) => {
+let login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Find the admin user by email
-    const User = await User.findOne({ Email: email });
+    const foundUser = await User.findOne({ Email: email.toLowerCase() }); // Ensure case-insensitive search
 
-    if (!User) {
-      return res.status(404).json({ message: "user not found." });
+    if (!foundUser) {
+      return res.status(404).json({ message: "User not found." });
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, User.Password);
+    const isPasswordValid = await bcrypt.compare(password, foundUser.Password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password." });
@@ -23,24 +20,23 @@ let Login = async (req, res) => {
 
     //* Generate JWT token
     const token = jwt.sign(
-      { userId: User._id, email: User.Email, role: User.Role },
+      { userId: foundUser._id, email: foundUser.Email, role: foundUser.Role },
       process.env.JWT_PASS,
-      { expiresIn: "30s" }
+      { expiresIn: "1h" } // Changed to 1 hour
     );
 
     //* Generate Refresh Token
     const refreshToken = jwt.sign(
-      { userId: User._id, email: User.Email },
+      { userId: foundUser._id, email: foundUser.Email },
       process.env.JWT_REF_PASS,
       { expiresIn: "1d" }
     );
 
-    User.refreshToken = refreshToken;
-    await User.save();
+    foundUser.refreshToken = refreshToken;
+    await foundUser.save();
 
-    const { Password, ...userDetails } = User.toObject();
+    const { Password, ...userDetails } = foundUser.toObject();
 
-    // Set cookie with refresh token
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -50,7 +46,11 @@ let Login = async (req, res) => {
 
     res.status(200).json({ token, User: userDetails });
   } catch (error) {
-    console.error("C: Error logging in admin:", error);
-    res.status(500).json({ error: "Error logging in admin: " + error });
+    console.error("Error logging in: ", error);
+    res.status(500).json({ error: "Failed to log in. Please try again later." });
   }
+};
+
+module.exports = {
+  login,
 };

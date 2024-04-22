@@ -21,7 +21,10 @@ const handleRefreshToken = async (req, res) => {
       process.env.JWT_PASS,
       { expiresIn: "30s" }
     );
-    res.json({ Role, accessToken });
+
+    const { Password, ...userDetails } = foundUser.toObject();
+    
+    res.json({ Role, accessToken , User: userDetails});
   });
 };
 

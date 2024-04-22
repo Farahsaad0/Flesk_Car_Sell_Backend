@@ -213,6 +213,7 @@ let getUserData = async (req, res) => {
       Email: user.Email,
       Role: user.Role,
       Statut: user.Statut,
+      photo: user.photo,
     });
   } catch (error) {
     console.error(
@@ -245,7 +246,7 @@ let updateUserData = async (req, res) => {
 
     // Vérifier si le rôle a été modifié en "Expert"
     // if (req.body.Role === "Expert") {
-      // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
+    // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
     // req.body.Statut = "En attente";
     // }
 
@@ -267,6 +268,7 @@ let updateUserData = async (req, res) => {
       Email: updatedUser.Email,
       Role: updatedUser.Role,
       Statut: updatedUser.Statut,
+      photo: updatedUser.photo,
     });
   } catch (error) {
     console.error(

@@ -164,6 +164,7 @@ const createCarAd = async (req, res) => {
       return res.status(400).send("Please provide a photo");
     }
     const sponsorship = "Gold";
+    
     // Extracting file details
     const { filename, path } = req.file;
 

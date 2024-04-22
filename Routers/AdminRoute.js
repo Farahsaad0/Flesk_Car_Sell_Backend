@@ -45,7 +45,7 @@ let adminLogin = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ token, adminUser: userDetails });
+    res.status(200).json({ token, User: userDetails });
   } catch (error) {
     console.error("C: Error logging in admin:", error);
     res.status(500).json({ error: "Error logging in admin: " + error });
