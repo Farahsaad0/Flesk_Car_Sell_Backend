@@ -27,6 +27,17 @@ const userSchema = new mongoose.Schema({
     enum: ["Utilisateur", "Expert", "Administrateur"],
     default: "Utilisateur",
   },
+   
+  Numéro :{
+    type: Number,
+    required: true,
+  },
+
+  Adresse : {
+    type: String,
+    required: true,
+  },
+
 
   Verified: {
     type: Boolean,
@@ -36,6 +47,10 @@ const userSchema = new mongoose.Schema({
   Verified_code: {
     type: Number,
     default: false,
+  },
+  photo: {
+    type: String,
+    
   },
 
   ExpertId: {

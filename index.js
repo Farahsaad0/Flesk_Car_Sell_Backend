@@ -15,7 +15,7 @@ const logoutController = require("./controllers/logoutController");
 const refreshTokenController = require("./controllers/refreshTokenController");
 const subscriptionController = require("./controllers/subscriptionController");
 const jobController = require("./controllers/jobController");
-const authController = require("./controllers/authController");
+const authController = require("./controllers/authController");const contactController = require ("./Routers/ContactRoute");
 
 dotenv.config();
 
@@ -54,7 +54,10 @@ app.get("/logout", logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);
 
 app.get("/getUserData/:id", userController.getUserData);
-app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
+//app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
+app.put("/updateUserData/:id", upload.single("photo"),userController.updateUserData);
+//* route contact 
+app.post("/contact",contactController.contact);
 
 app.get("/getAllUsers", verifyJWT, userController.getAllUsers);
 app.get("/getUser/:id", userController.getUserById);
