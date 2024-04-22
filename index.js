@@ -15,14 +15,12 @@ const logoutController = require("./controllers/logoutController");
 const refreshTokenController = require("./controllers/refreshTokenController");
 const subscriptionController = require("./controllers/subscriptionController");
 const jobController = require("./controllers/jobController");
-
+const authController = require("./controllers/authController");
 
 dotenv.config();
 
-
 const port = process.env.PORT;
 const app = express();
-
 
 // Middleware
 app.use(express.json());
@@ -35,7 +33,6 @@ app.use(
 );
 // app.use(cors());
 app.use(cookieParser());
-
 
 // Logging middleware function
 const logRequest = (req, res, next) => {
@@ -50,16 +47,14 @@ const logRequest = (req, res, next) => {
 app.use(logRequest);
 
 //* authentication routes
-app.post("/login", userController.login);
+app.post("/login", authController.login);
 app.post("/register", userController.register);
 app.post("/verify", userController.verifyRouteHandler);
 app.get("/logout", logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);
 
-
-app.get("/getUserData", userController.getUserData);
-app.put("/updateUserData/:id", userController.updateUserData);
-
+app.get("/getUserData/:id", userController.getUserData);
+app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
 
 app.get("/getAllUsers", verifyJWT, userController.getAllUsers);
 app.get("/getUser/:id", userController.getUserById);
@@ -68,40 +63,44 @@ app.get("/getUser/:id", userController.getUserById);
 //app.post("/carAds", carAdController.createCarAd);
 app.use("/images", express.static("public/uploads/"));
 app.post("/carAds", upload.single("photo"), carAdController.createCarAd);
-app.get('/getCarAdByUserId/:userId', carAdController.getCarAdByUserId);
+app.get("/getCarAdByUserId/:userId", carAdController.getCarAdByUserId);
 
 app.get("/carAds", carAdController.getAllCarAds);
-app.put("/:id", upload.single("photo"), carAdController.updateCarAd);
-app.delete("/carAds/:id", carAdController.deleteCarAd);
+app.put("/:id", verifyJWT, upload.single("photo"), carAdController.updateCarAd);
+app.delete("/carAds/:id", verifyJWT, carAdController.deleteCarAd);
 app.get("/carAds/:id", carAdController.getCarAdById);
 app.get("/carAds/search", carAdController.searchCarAds);
 app.put("/:id/specialite", expertController.updateSpecialite);
 // app.get("/experts", expertController.getAllExperts);
 // app.put("/:id/bloquer", expertController.bloquerExpert);
 
-
 //* Subscription routes
 app.post("/subscription", verifyJWT, subscriptionController.createSubscription);
 app.get("/subscriptions", subscriptionController.getAllSubscriptions);
 app.get("/subscription/:id", subscriptionController.getOneSubscription);
-app.put("/subscription/:id", verifyJWT, subscriptionController.updateSubscription);
-app.delete("/subscription/:id", verifyJWT, subscriptionController.deleteSubscription);
-
+app.put(
+  "/subscription/:id",
+  verifyJWT,
+  subscriptionController.updateSubscription
+);
+app.delete(
+  "/subscription/:id",
+  verifyJWT,
+  subscriptionController.deleteSubscription
+);
 
 //* Experts routes
-app.get("/experts", expertController.getApprovedExperts)
+app.get("/experts", expertController.getApprovedExperts);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 
-
 //* Job routes
-app.post("/createJob", jobController.createJob)
-app.get("/jobs/:expertId", jobController.getJobsByExpertId)
-app.get("/jobs/:clientId", jobController.getJobsByClientId)
-app.put("/jobs/accept/:jobId", jobController.acceptJob)
-app.put("/jobs/reject/:jobId", jobController.rejectJob)
-
+app.post("/createJob", jobController.createJob);
+app.get("/jobs/:expertId", jobController.getJobsByExpertId);
+app.get("/jobs/:clientId", jobController.getJobsByClientId);
+app.put("/jobs/accept/:jobId", jobController.acceptJob);
+app.put("/jobs/reject/:jobId", jobController.rejectJob);
 
 //* admin routes
 app.post("/adminLogin", adminController.adminLogin);
@@ -109,21 +108,17 @@ app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
 app.put("/users/:id/block", verifyJWT, userController.blockUser);
 app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 
-
 // app.put("/:id", expertController.updateExpert);
 // app.delete("/:id", expertController.deleteExpert);
-
 
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something broke!");
 });
-
 
 mongoose
   .connect(process.env.MONGODB_URI)

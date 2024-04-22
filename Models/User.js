@@ -54,6 +54,11 @@ const userSchema = new mongoose.Schema({
     default: "En attente",
   },
 
+  photo: {
+    type: String,
+    default: "DefaultProfilePicture.jpg",
+  },
+
   refreshToken: String,
 });
 

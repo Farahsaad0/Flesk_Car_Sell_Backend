@@ -195,14 +195,7 @@ let login = async (req, res) => {
 // Définition de la fonction pour renvoyer les données de l'utilisateur
 let getUserData = async (req, res) => {
   try {
-    // Extraire le token d'authentification de l'en-tête de la requête
-    const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
-
-    // Vérifier et décoder le token
-    const decodedToken = verifyToken(token);
-
-    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
-    const userId = decodedToken._id;
+    const userId = req.params.id;
 
     // Trouver l'utilisateur par son ID dans la base de données
     const user = await User.findById(userId);
@@ -234,14 +227,12 @@ let getUserData = async (req, res) => {
 
 let updateUserData = async (req, res) => {
   try {
-    // Extraire le token d'authentification de l'en-tête de la requête
-    const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
-
-    // Vérifier et décoder le token
-    const decodedToken = verifyToken(token);
-
+    if (req.file) {
+      const { filename } = req.file;
+      req.body.photo = filename;
+    }
     // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
-    const userId = decodedToken._id;
+    const userId = req.params.id;
 
     // Vérifier si le nouveau mot de passe est présent dans les données de la requête
     if (req.body.Password) {
@@ -253,10 +244,10 @@ let updateUserData = async (req, res) => {
     }
 
     // Vérifier si le rôle a été modifié en "Expert"
-    if (req.body.Role === "Expert") {
+    // if (req.body.Role === "Expert") {
       // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
-      req.body.Statut = "En attente";
-    }
+    // req.body.Statut = "En attente";
+    // }
 
     // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
     const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
