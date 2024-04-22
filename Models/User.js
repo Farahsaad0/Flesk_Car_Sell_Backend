@@ -31,11 +31,13 @@ const userSchema = new mongoose.Schema({
   Numéro :{
     type: Number,
     required: true,
+    default: 0,
   },
 
   Adresse : {
     type: String,
     required: true,
+    default: "default address",
   },
 
 
