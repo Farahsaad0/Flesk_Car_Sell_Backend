@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 
 const carAdSchema = new mongoose.Schema({
   titre: { type: String, required: true, trim: true },
@@ -36,13 +38,13 @@ const carAdSchema = new mongoose.Schema({
   annee: {
     type: Number,
     required: true,
-    min: 1900, // Assuming cars before 1900 are invalid
-    max: new Date().getFullYear(), // Current year
+    min: 1900, 
+    max: new Date().getFullYear(), 
   },
 
   kilometrage: {
     type: Number,
-    min: 0, // Ensure mileage is positive
+    min: 0,
     default: 0,
   },
 
@@ -78,6 +80,23 @@ const carAdSchema = new mongoose.Schema({
 carAdSchema.index({ marque: 1, modele: 1 });
 carAdSchema.index({ prix: 1 });
 carAdSchema.index({ annee: 1 });
+
+// Middleware to delete associated photo when a CarAd is removed
+carAdSchema.pre('remove', function(next) {
+  // Assuming photos are stored in the 'public/uploads' directory
+  const photoPath = path.join(__dirname, '..', 'public', 'uploads', this.photo);
+  
+  // Delete the photo file
+  fs.unlink(photoPath, (err) => {
+    if (err) {
+      console.error("Error deleting photo:", err);
+    } else {
+      console.log("Deleted photo:", photoPath);
+    }
+  });
+
+  next();
+});
 
 const CarAd = mongoose.model("CarAd", carAdSchema);
 

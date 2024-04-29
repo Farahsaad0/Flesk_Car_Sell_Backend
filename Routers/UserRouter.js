@@ -65,7 +65,7 @@ let register = async (req, res) => {
 };
 
 // Fonction pour envoyer un e-mail de vérification
-const emailSander = async (email, subject, message) => {
+const emailSander = async (email, subject, message) => {  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   try {
     await sendEmail(email, subject, message);
     console.log("E-mail de vérification envoyé avec succès");

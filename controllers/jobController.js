@@ -87,20 +87,30 @@ const getJobsByClientId = async (req, res) => {
 
 const acceptJob = async (req, res) => {
   const subject = "mise a jour de votre demand d'expertism";
-  const message =
-    "Nous tenons à vous informer que votre demande a été accepter par l'expert. :) ";
 
   try {
     const jobId = req.params.jobId;
 
     const job = await Job.findById(jobId)
-      .populate("client", ["Email"]) // Only populate the Email field
+      .populate({
+          path: "expert",
+          select: "ExpertId",
+          populate: {
+            path: "ExpertId",
+            select: "konnect_link",
+          },
+        },
+      )
+      .populate("client", ["Email"])
       .exec();
 
     if (!job) {
       return res.status(404).json({ success: false, message: "Job not found" });
     }
 
+
+    const message =
+      "Nous tenons à vous informer que votre demande a été accepter par l'expert. :) Vous pouvez payer via: " + job.expert.ExpertId.konnect_link;
     const clientEmail = job.client.Email;
 
     job.accepted = "accepted";

@@ -4,6 +4,7 @@ const CarAd = require("../Models/carAd");
 const User = require("../Models/User");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 // const upload = require("../multer-config"); // Importer multer-config
 
 // Route pour la création d'une nouvelle annonce de voiture
@@ -156,7 +157,7 @@ const path = require("path");
 const createCarAd = async (req, res) => {
   try {
     // Extracting fields from the request body
-    const { titre, description, prix, marque, modele, annee, date, userId } =
+    const { titre, description, prix, marque, modele, annee, date, utilisateur } =
       req.body;
     console.log(req.body);
     // Checking if all required fields are provided
@@ -164,7 +165,7 @@ const createCarAd = async (req, res) => {
       return res.status(400).send("Please provide a photo");
     }
     const sponsorship = "Gold";
-    
+
     // Extracting file details
     const { filename, path } = req.file;
 
@@ -179,7 +180,7 @@ const createCarAd = async (req, res) => {
       date,
       photo: filename,
       sponsorship,
-      utilisateur: userId,
+      utilisateur,
     });
 
     // Save the new car ad to the database
@@ -243,11 +244,7 @@ const updateCarAd = async (req, res) => {
     }
 
     // Find and update the car ad in the database
-    const ad = await CarAd.findByIdAndUpdate(
-      id,
-      updatedDetails,
-      { new: true }
-    );
+    const ad = await CarAd.findByIdAndUpdate(id, updatedDetails, { new: true });
 
     // Check if the car ad exists
     if (!ad) {
@@ -263,7 +260,6 @@ const updateCarAd = async (req, res) => {
       .json({ error: "Erreur lors de la modification de l'annonce " + error });
   }
 };
-
 
 // supprimer une annonce de voiture
 let deleteCarAd = async (req, res) => {
@@ -303,7 +299,6 @@ let getCarAdById = async (req, res) => {
   }
 };
 
-
 // récupérer toutes les annonces de voiture par l'ID de l'utilisateur
 let getCarAdByUserId = async (req, res) => {
   try {
@@ -313,8 +308,17 @@ let getCarAdByUserId = async (req, res) => {
     const ads = await CarAd.find({ utilisateur: userId });
     res.status(200).json(ads); // Renvoie les annonces correspondantes
   } catch (error) {
-    console.error("Erreur lors de la récupération des annonces par utilisateur :", error);
-    res.status(500).json({ error: "Erreur lors de la récupération des annonces par utilisateur " + error });
+    console.error(
+      "Erreur lors de la récupération des annonces par utilisateur :",
+      error
+    );
+    res
+      .status(500)
+      .json({
+        error:
+          "Erreur lors de la récupération des annonces par utilisateur " +
+          error,
+      });
   }
 };
 
@@ -372,6 +376,40 @@ let searchCarAds = async (req, res) => {
   }
 };
 
+// const delete_unused_photos = async (req, res) => {
+//   try {
+//     // Find all photo paths from CarAds
+//     const carAds = await CarAd.find({}, "photo");
+//     const usedPhotoPaths = carAds.map((ad) => ad.photo);
+
+//     // Assuming photos are stored in the 'public/uploads' directory
+//     const uploadDir = path.join(__dirname, "..", "public", "uploads");
+
+//     // Get all files in the uploads directory
+//     const allFiles = fs.readdirSync(uploadDir);
+
+//     // Filter out files that are not used as photos in CarAds
+//     const unusedPhotos = allFiles.filter(
+//       (file) => !usedPhotoPaths.includes(file)
+//     );
+
+//     // Delete unused photos
+//     unusedPhotos.forEach((file) => {
+//       const filePath = path.join(uploadDir, file);
+//       fs.unlinkSync(filePath);
+//       console.log(`Deleted photo: ${filePath}`);
+//     });
+
+//     res.json({
+//       message: "Unused photos deleted successfully",
+//       deletedPhotos: unusedPhotos,
+//     });
+//   } catch (error) {
+//     console.error("Error deleting unused photos:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
 module.exports = {
   createCarAd,
   getAllCarAds,
@@ -380,4 +418,5 @@ module.exports = {
   getCarAdById,
   searchCarAds,
   getCarAdByUserId,
+  // delete_unused_photos,
 };

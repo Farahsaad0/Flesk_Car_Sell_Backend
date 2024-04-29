@@ -221,7 +221,7 @@ let deleteExpert = async (req, res) => {
   }
 };
 
-const emailSander = async (email, subject, message) => {
+const emailSander = async (email, subject, message) => {  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   // const subject = "Code de vérification pour votre inscription";
   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 

@@ -21,7 +21,11 @@ const expertSchema = new mongoose.Schema({
     required: true,
   },
 
-
+  konnect_link: {
+    type: String,
+    required: true,
+    default: "https://api.preprod.konnect.network/ITf8R2THT",
+  },
 });
 
 const Expert = mongoose.model("ExpertProfile", expertSchema);
