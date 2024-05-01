@@ -237,6 +237,44 @@ const emailSander = async (email, subject, message) => {  //! ___REMEMBER_TO_PUT
   }
 };
 
+
+// Fonction pour envoyer une demande pour devenir expert
+const requestExpertRole = async (req, res) => {
+  try {
+    const { userId, spécialité, prix, experience } = req.body;
+
+    // Mettre à jour le rôle de l'utilisateur en "Expert"
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { Role: "Expert", Statut: "En attente", ExpertId: null }, // Réinitialisez ExpertId à null pour éviter les doublons
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
+    }
+
+    // Créer un nouveau document d'expert avec les informations supplémentaires
+    const newExpert = new Expert({
+      spécialité: spécialité,
+      prix: prix,
+      experience: experience,
+    });
+
+    // Enregistrer le document d'expert dans la base de données
+    await newExpert.save();
+
+    // Mettre à jour l'ExpertId de l'utilisateur avec l'ID de l'expert créé
+    user.ExpertId = newExpert._id;
+    await user.save();
+
+    res.json(user);
+  } catch (error) {
+    console.error("Erreur lors de la demande pour devenir expert :", error);
+    res.status(500).json({ message: "Erreur lors de la demande pour devenir expert." });
+  }
+};
+
+
 module.exports = {
   updateSpecialite,
   getAllExperts,
@@ -246,4 +284,5 @@ module.exports = {
   deleteExpert,
   rejeterExpert,
   getApprovedExperts,
+  requestExpertRole,
 };

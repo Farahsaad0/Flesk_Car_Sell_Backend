@@ -102,8 +102,9 @@ app.get("/carAds", carAdController.getAllCarAds);
 // app.delete("/delete_unused_photos", carAdController.delete_unused_photos);
 app.put("/:id", verifyJWT, single_upload, carAdController.updateCarAd);
 app.delete("/carAds/:id", verifyJWT, carAdController.deleteCarAd);
-app.get("/carAds/:id", carAdController.getCarAdById);
 app.get("/carAds/search", carAdController.searchCarAds);
+app.get("/carAds/details/:id", carAdController.getCarAdById); //importantttttt
+
 app.put("/:id/specialite", expertController.updateSpecialite);
 // app.get("/experts", expertController.getAllExperts);
 // app.put("/:id/bloquer", expertController.bloquerExpert);
@@ -142,7 +143,7 @@ app.get("/experts", expertController.getApprovedExperts);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
-
+app.post("/demandeExpert", expertController.requestExpertRole);
 //* Job routes
 app.post("/createJob", jobController.createJob);
 app.get("/jobs/:expertId", jobController.getJobsByExpertId);
