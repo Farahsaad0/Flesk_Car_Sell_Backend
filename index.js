@@ -81,7 +81,7 @@ app.get("/getUserData/:id", userController.getUserData);
 //app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
 app.put(
   "/updateUserData/:id",
-  upload.single("photo"),
+  single_upload,
   userController.updateUserData
 );
 //* route contact
