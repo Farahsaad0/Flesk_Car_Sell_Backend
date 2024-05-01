@@ -157,17 +157,26 @@ const fs = require("fs");
 const createCarAd = async (req, res) => {
   try {
     // Extracting fields from the request body
-    const { titre, description, prix, marque, modele, annee, date, utilisateur } =
-      req.body;
+    const {
+      titre,
+      description,
+      prix,
+      marque,
+      modele,
+      annee,
+      location,
+      date,
+      sponsorship,
+      utilisateur,
+    } = req.body;
     console.log(req.body);
-    // Checking if all required fields are provided
-    if (!req.file) {
-      return res.status(400).send("Please provide a photo");
+    // Check if files are provided
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).send("Please provide at least one photo");
     }
-    const sponsorship = "Gold";
 
-    // Extracting file details
-    const { filename, path } = req.file;
+    // Extract filenames from uploaded files
+    const filenames = req.files.map((file) => file.filename);
 
     // Create a new car ad instance
     const newCarAd = new CarAd({
@@ -178,8 +187,9 @@ const createCarAd = async (req, res) => {
       annee,
       marque,
       date,
-      photo: filename,
+      photos: filenames,
       sponsorship,
+      location,
       utilisateur,
     });
 
@@ -219,6 +229,7 @@ const updateCarAd = async (req, res) => {
       modele,
       annee,
       date,
+      location,
       sponsorship,
     } = req.body;
     const { id } = req.params;
@@ -235,6 +246,7 @@ const updateCarAd = async (req, res) => {
       modele,
       annee,
       date,
+      location,
       sponsorship,
     };
 
@@ -312,13 +324,10 @@ let getCarAdByUserId = async (req, res) => {
       "Erreur lors de la récupération des annonces par utilisateur :",
       error
     );
-    res
-      .status(500)
-      .json({
-        error:
-          "Erreur lors de la récupération des annonces par utilisateur " +
-          error,
-      });
+    res.status(500).json({
+      error:
+        "Erreur lors de la récupération des annonces par utilisateur " + error,
+    });
   }
 };
 

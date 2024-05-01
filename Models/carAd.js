@@ -59,14 +59,13 @@ const carAdSchema = new mongoose.Schema({
     default: Date.now,
   },
 
-  photo: {
-    type: String,
+  photos: {
+    type: [String],
     required: true,
   },
 
   sponsorship: {
     type: String,
-    enum: ["Gold", "Silver", "Bronze"],
   },
 
   utilisateur: {

@@ -10,7 +10,9 @@ const createCarAdCache = async (req, res) => {
     );
 
     // Check if there is another CarAdCache with the same user
-    const existingCarAd = await CarAdCache.findOne({ utilisateur: filteredBody.utilisateur });
+    const existingCarAd = await CarAdCache.findOne({
+      utilisateur: filteredBody.utilisateur,
+    });
 
     let newCarAd;
     if (existingCarAd) {
@@ -29,7 +31,6 @@ const createCarAdCache = async (req, res) => {
   }
 };
 
-
 // Read route
 const getCarAdCache = async (req, res) => {
   try {
@@ -37,7 +38,8 @@ const getCarAdCache = async (req, res) => {
       utilisateur: req.params.userId,
     })
       .sort({ $natural: -1 })
-      .limit(1);
+      .limit(1)
+      .select("-__v");
     if (!carAd) {
       return res.status(404).json({ error: "Car ad not found" });
     }

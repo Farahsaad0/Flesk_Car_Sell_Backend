@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
-const handlebars = require('handlebars');
-const fs = require('fs');
+const handlebars = require("handlebars");
+const fs = require("fs");
 
 // Créer un transporter SMTP réutilisable
 const transporter = nodemailer.createTransport({
@@ -15,20 +15,37 @@ const transporter = nodemailer.createTransport({
 
 // Function to read and compile Handlebars template
 const compileEmailTemplate = async () => {
-  const templateHtml = await fs.promises.readFile('./views/receipt.handlebars', 'utf8');
+  const templateHtml = await fs.promises.readFile(
+    "./views/receipt.handlebars",
+    "utf8"
+  );
   return handlebars.compile(templateHtml);
 };
 
+// Function to read and compile Handlebars notification template
+const compileEmailNotificationTemplate = async () => {
+  const templateHtml = await fs.promises.readFile(
+    "./views/notification.handlebars",
+    "utf8"
+  );
+  return handlebars.compile(templateHtml);
+};
 
 // Fonction pour envoyer un e-mail
 const sendEmail = async (to, subject, variables) => {
   try {
     // Afficher un message de débogage avant l'envoi de l'e-mail
     console.log("Envoi de l'e-mail en cours...");
-    
-    const compileTemplate = await compileEmailTemplate();
 
-    const html = compileTemplate(variables);
+    let html;
+    if (variables.type === "expert consultation") {
+      const compileNotificationTemplate =
+        await compileEmailNotificationTemplate();
+      html = compileNotificationTemplate(variables);
+    } else {
+      const compileTemplate = await compileEmailTemplate();
+      html = compileTemplate(variables);
+    }
 
     // Envoi de l'e-mail
     await transporter.sendMail({

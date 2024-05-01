@@ -50,11 +50,6 @@ const carAdCacheSchema = new mongoose.Schema({
   //   type: String,
   // },
 
-  sponsorship: {
-    type: String,
-    enum: ["Gold", "Silver", "Bronze"],
-  },
-
   utilisateur: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

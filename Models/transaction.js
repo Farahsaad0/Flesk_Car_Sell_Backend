@@ -2,9 +2,25 @@ const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema(
   {
-    userId: {
+    sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+
+    recipient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "job",
+    },
+
+    type: {
+      type: String,
+      enum: ["sponsorship", "expert consultation", "down payment"],
       required: true,
     },
 
@@ -12,6 +28,8 @@ const transactionSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+
+    expertGotPaid: Boolean,
 
     paymentStatus: {
       type: String,
@@ -26,13 +44,9 @@ const transactionSchema = new mongoose.Schema(
 
     sponsorship: {
       type: String,
-      required: true,
     },
 
-    redeemed: {
-      type: Boolean,
-      default: false,
-    },
+    redeemed: Boolean,
   },
   { timestamps: true }
 );

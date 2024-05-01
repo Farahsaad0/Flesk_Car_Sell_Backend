@@ -7,12 +7,12 @@ const getInactivatedSponsorships = async (req, res) => {
     const sponsorships = await Transaction.find({
       userId: req.params.userId,
       redeemed: false,
-      paymentStatus: "completed"
+      paymentStatus: "completed",
     });
     if (sponsorships.length === 0) {
       return res
         .status(404)
-        .json({ error: "No Inactivated Sponsorships for this user" });
+        .json({ success: "No Inactivated Sponsorships for this user" });
     }
     res.status(200).json(sponsorships);
   } catch (error) {

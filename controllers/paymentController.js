@@ -7,30 +7,51 @@ const Subscription = require("../Models/Subscription");
 
 const payment = async (req, res) => {
   let receivedData = req.body;
+  let amount,
+    recipient,
+    type,
+    job = null,
+    sponsorship,
+    redirectToOnSuccess;
 
-  // if (
-  //   !receivedData.amount ||
-  //   !Number.isFinite(receivedData.amount) ||
-  //   receivedData.amount <= 99
-  // ) {
-  //   return res.status(400).json({ message: "Invalid amount" });
-  // }
-  let userId = receivedData.userId;
-  // try {
-  //   const isValid = jwt.verify(receivedData.userToken, process.env.JWT_PASS);
-  //   const decoded = jwt.decode(receivedData.userToken);
-  //   if (!isValid || !decoded || !decoded.userId) {
-  //     throw new Error("Invalid or outdated token");
-  //   }
-  //   console.log(decoded.userId);
-  //   userId = decoded.userId;
-  // } catch (err) {
-  //   return res.status(401).json({ message: "Invalid userToken" });
-  // }
+  if (receivedData.type === "expert consultation") {
+    console.log("first 1");
+    amount = receivedData.amount * 10;
+    recipient = receivedData.expertId;
+    job = receivedData.jobId;
+    type = receivedData.type;
+    redirectToOnSuccess = "https://dev.konnect.network/gateway/payment-success";
+  } else if (receivedData.type === "down payment") {
+    console.log("first 2");
+    amount = receivedData.amount;
+    recipient = receivedData.sellerId;
+    type = receivedData.type;
+  } else {
+    console.log("first 3");
+    sponsorship = await Subscription.findById(receivedData.subscription);
+    amount = sponsorship.price * 10;
+    type = "sponsorship";
+    redirectToOnSuccess = "https://8n7vlqww-3000.euw.devtunnels.ms/create-ad";
+  }
 
-  const sponsorship = await Subscription.findById(receivedData.subscription);
-  const amount = sponsorship.price * 10;
-  
+  console.log(
+    "amoun: " +
+      amount +
+      " | recipient: " +
+      recipient +
+      " | type: " +
+      type +
+      " | jobid : " +
+      job +
+      " | userid: " +
+      receivedData.userId +
+      " | sponsorship: " +
+      sponsorship +
+      " | redirection link : " +
+      redirectToOnSuccess
+  );
+  let sender = receivedData.userId;
+  console.log("second");
   const paymentData = {
     receiverWalletId: process.env.RECEIVER_WALLET_ID,
     token: "TND",
@@ -44,35 +65,48 @@ const payment = async (req, res) => {
     orderId: "1234657",
     webhook: "https://8n7vlqww-8000.euw.devtunnels.ms/konnect/webhook",
     silentWebhook: true,
-    successUrl: "https://8n7vlqww-3000.euw.devtunnels.ms/create-ad",
+    successUrl: redirectToOnSuccess,
     failUrl: "https://dev.konnect.network/gateway/payment-failure",
     theme: "light",
   };
-
+  console.log("third");
   try {
     const config = {
       headers: {
         "x-api-key": process.env.KONNECT_API_KEY,
       },
     };
-
+    console.log("forth");
     const response = await axios.post(
       `${process.env.KONNECT_API_URL}/init-payment`,
       paymentData,
       config
     );
-    console.log(sponsorship.type)
-    const transaction = new Transaction({
-      userId: userId,
-      amount: amount,
+    console.log(response.data);
+    console.log("fifth");
+    const transactionData = {
+      sender,
+      recipient: recipient || "65ec53a26c449ebae3adbe71",
+      type,
+      amount,
       paymentStatus: "pending",
       paymentId: response.data.paymentRef,
-      sponsorship: sponsorship.type,
-    });
+    };
+    console.log("sixth");
 
+    if (sponsorship) {
+      transactionData.sponsorship = sponsorship.type;
+      transactionData.redeemed = false;
+    }
+    if (job) {
+      transactionData.job = job;
+      transactionData.expertGotPaid = false;
+    }
+    const transaction = new Transaction(transactionData);
     await transaction.save();
-
-    res.json(response.data);
+    if (receivedData.type === "expert consultation") {
+      return response.data;
+    } else res.json(response.data);
   } catch (error) {
     // Handle specific errors returned by Konnect API
     if (error.response) {
@@ -131,7 +165,7 @@ const payment_update = async (req, res) => {
       transactionDate: new Date(
         response.data.payment.updatedAt
       ).toLocaleDateString(),
-      subscription: "Premium Subscription",
+      subscription: transaction.sponsorship,
     };
 
     await emailSender(clientEmail, subject, variables);

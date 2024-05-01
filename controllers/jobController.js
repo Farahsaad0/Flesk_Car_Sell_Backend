@@ -2,6 +2,7 @@ const Job = require("../Models/Job");
 const User = require("../Models/User");
 const Expert = require("../Models/expert");
 const sendEmail = require("../utils/sendEmail");
+const { payment } = require("./paymentController");
 
 const createJob = async (req, res) => {
   try {
@@ -93,31 +94,55 @@ const acceptJob = async (req, res) => {
 
     const job = await Job.findById(jobId)
       .populate({
-          path: "expert",
-          select: "ExpertId",
-          populate: {
-            path: "ExpertId",
-            select: "konnect_link",
-          },
+        path: "expert",
+        select: "ExpertId",
+        populate: {
+          path: "ExpertId",
+          select: "konnect_link prix",
         },
-      )
-      .populate("client", ["Email"])
+      })
+      .populate("client", "Email")
       .exec();
 
     if (!job) {
       return res.status(404).json({ success: false, message: "Job not found" });
     }
 
-
     const message =
-      "Nous tenons à vous informer que votre demande a été accepter par l'expert. :) Vous pouvez payer via: " + job.expert.ExpertId.konnect_link;
+      "Nous tenons à vous informer que votre demande a été accepter par l'expert. :) Vous pouvez payer via: " +
+      job.expert.ExpertId.konnect_link;
     const clientEmail = job.client.Email;
 
     job.accepted = "accepted";
     job.acceptDate = Date.now();
     await job.save();
 
-    await emailSender(clientEmail, subject, message);
+    // await emailSender(clientEmail, subject, message);
+
+    const paymentReqBody = {
+      type: "expert consultation",
+      amount: job.expert.ExpertId.prix,
+      expertId: job.expert._id,
+      jobId: job._id,
+      userId: job.client._id,
+    };
+
+    const paymentResponse = await payment({ body: paymentReqBody }, res);
+
+    console.log(paymentResponse);
+    console.log(paymentResponse.payUrl);
+
+    const variables = {
+      type: "expert consultation",
+      total: job.expert.ExpertId.prix,
+      amount: job.expert.ExpertId.prix,
+      transactionDate: Date.now(),
+      paymentLink: paymentResponse.payUrl,
+    };
+
+    const subject = "mise a jour de votre demand d'expertism";
+
+    await emailSender(clientEmail, subject, variables);
 
     res.status(200).json({ success: true, data: job });
   } catch (error) {
@@ -156,12 +181,29 @@ const rejectJob = async (req, res) => {
   }
 };
 
-const emailSender = async (email, subject, message) => {
+// const emailSender = async (email, subject, message) => {
+//   // const subject = "Code de vérification pour votre inscription";
+//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+
+//   try {
+//     await sendEmail(email, subject, message);
+//     console.log("E-mail de notification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de notification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
+//   }
+// };
+
+const emailSender = async (email, subject, variables) => {
+  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   // const subject = "Code de vérification pour votre inscription";
   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
   try {
-    await sendEmail(email, subject, message);
+    await sendEmail(email, subject, variables);
     console.log("E-mail de notification envoyé avec succès");
   } catch (error) {
     console.error(
