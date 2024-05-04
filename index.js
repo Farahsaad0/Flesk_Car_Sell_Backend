@@ -81,7 +81,7 @@ app.get("/getUserData/:id", userController.getUserData);
 //app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
 app.put(
   "/updateUserData/:id",
-  upload.single("photo"),
+  single_upload,
   userController.updateUserData
 );
 //* route contact
@@ -144,6 +144,7 @@ app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.post("/demandeExpert", expertController.requestExpertRole);
+
 //* Job routes
 app.post("/createJob", jobController.createJob);
 app.get("/jobs/:expertId", jobController.getJobsByExpertId);
@@ -160,6 +161,7 @@ app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 // app.put("/:id", expertController.updateExpert);
 // app.delete("/:id", expertController.deleteExpert);
 
+//* payment routes
 app.post("/init-payment", paymentController.payment);
 app.get("/konnect/webhook", paymentController.payment_update);
 

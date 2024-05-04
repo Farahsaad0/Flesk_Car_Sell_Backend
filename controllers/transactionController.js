@@ -5,7 +5,7 @@ const Transaction = require("../Models/transaction");
 const getInactivatedSponsorships = async (req, res) => {
   try {
     const sponsorships = await Transaction.find({
-      userId: req.params.userId,
+      sender: req.params.userId,
       redeemed: false,
       paymentStatus: "completed",
     });

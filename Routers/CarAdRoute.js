@@ -165,7 +165,6 @@ const createCarAd = async (req, res) => {
       modele,
       annee,
       location,
-      date,
       sponsorship,
       utilisateur,
     } = req.body;
@@ -186,7 +185,6 @@ const createCarAd = async (req, res) => {
       modele,
       annee,
       marque,
-      date,
       photos: filenames,
       sponsorship,
       location,
@@ -228,7 +226,6 @@ const updateCarAd = async (req, res) => {
       marque,
       modele,
       annee,
-      date,
       location,
       sponsorship,
     } = req.body;
@@ -245,7 +242,6 @@ const updateCarAd = async (req, res) => {
       marque,
       modele,
       annee,
-      date,
       location,
       sponsorship,
     };

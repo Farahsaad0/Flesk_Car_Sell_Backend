@@ -7,6 +7,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = "./public/uploads/";
     // Check if upload directory exists, create if not
+    console.log("point 1 ");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -22,6 +23,7 @@ const storage = multer.diskStorage({
 
 // Filter for allowed file types
 const fileFilter = (req, file, cb) => {
+  console.log("filtering");
   if (
     file.mimetype === "image/jpeg" ||
     file.mimetype === "image/png" ||
@@ -51,10 +53,10 @@ const multi_upload = multer({
   storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 5, // Limit file size to 5 MB
-    files: 10, // Limit number of files to 10
+    fileSize: 1024 * 1024 * 5,
+    files: 10,
   },
-}).array("photos", 10); // Change this field as per your requirement
+}).array("photos", 10);
 
 module.exports = {
   single_upload,
