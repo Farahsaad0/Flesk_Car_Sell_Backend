@@ -22,6 +22,15 @@ const compileEmailTemplate = async () => {
   return handlebars.compile(templateHtml);
 };
 
+// Function to read and compile Handlebars Verification Code template
+const compileEmailVerificationCode = async () => {
+  const templateHtml = await fs.promises.readFile(
+    "./views/verificationCode.handlebars",
+    "utf8"
+  );
+  return handlebars.compile(templateHtml);
+};
+
 // Function to read and compile Handlebars notification template
 const compileEmailNotificationTemplate = async () => {
   const templateHtml = await fs.promises.readFile(
@@ -42,11 +51,15 @@ const sendEmail = async (to, subject, variables) => {
       const compileNotificationTemplate =
         await compileEmailNotificationTemplate();
       html = compileNotificationTemplate(variables);
+    } else if (variables.type === "verification Code") {
+      const compileVerificationCode = await compileEmailVerificationCode();
+      html = compileVerificationCode(variables);
     } else {
       const compileTemplate = await compileEmailTemplate();
       html = compileTemplate(variables);
     }
 
+    console.log(variables.type + " << from sendEmail.");
     // Envoi de l'e-mail
     await transporter.sendMail({
       from: "farah.saad505@gmail.com",

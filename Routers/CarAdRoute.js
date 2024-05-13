@@ -5,6 +5,8 @@ const User = require("../Models/User");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const CarAdCache = require("../Models/carAdCache");
+const Transaction = require("../Models/transaction");
 // const upload = require("../multer-config"); // Importer multer-config
 
 // Route pour la création d'une nouvelle annonce de voiture
@@ -165,7 +167,6 @@ const createCarAd = async (req, res) => {
       modele,
       annee,
       location,
-      date,
       sponsorship,
       utilisateur,
     } = req.body;
@@ -186,7 +187,6 @@ const createCarAd = async (req, res) => {
       modele,
       annee,
       marque,
-      date,
       photos: filenames,
       sponsorship,
       location,
@@ -195,9 +195,27 @@ const createCarAd = async (req, res) => {
 
     // Save the new car ad to the database
     const ad = await newCarAd.save();
+    if (sponsorship) {
+      const transaction = await Transaction.findById(sponsorship);
+
+      if (transaction) {
+        const durationInMilliseconds =
+          transaction.duration * 24 * 60 * 60 * 1000;
+
+        const expirationDate = new Date(Date.now() + durationInMilliseconds);
+
+        await Transaction.findByIdAndUpdate(
+          sponsorship,
+          { sponsorshipStatus: "active", expirationDate: expirationDate },
+          { new: true }
+        );
+      }
+    }
 
     console.log("Ad created successfully:", ad);
-
+    await CarAdCache.findOneAndDelete({
+      utilisateur: utilisateur,
+    });
     // Send a success response
     res.status(201).json(ad);
   } catch (error) {
@@ -208,7 +226,7 @@ const createCarAd = async (req, res) => {
 
 let getAllCarAds = async (req, res) => {
   try {
-    const ads = await CarAd.find();
+    const ads = await CarAd.find().populate("sponsorship");
     res.status(200).json(ads); // Renvoie toutes les annonces
   } catch (error) {
     console.error("Erreur lors de la récupération des annonces :", error);
@@ -228,7 +246,6 @@ const updateCarAd = async (req, res) => {
       marque,
       modele,
       annee,
-      date,
       location,
       sponsorship,
     } = req.body;
@@ -245,7 +262,6 @@ const updateCarAd = async (req, res) => {
       marque,
       modele,
       annee,
-      date,
       location,
       sponsorship,
     };
@@ -385,6 +401,34 @@ let searchCarAds = async (req, res) => {
   }
 };
 
+// Route to search and return CarAds by the specified feature in their sponsorship
+const searchCarAdsByFeature = async (req, res) => {
+  try {
+    // Extract the feature from the query parameters
+    const { feature } = req.query;
+
+    // Validate the feature
+    if (!feature) {
+      return res.status(400).json({ error: "Feature must be provided" });
+    }
+    console.log(feature);
+    // Find CarAds where the sponsorship features array contains the specified feature
+    const CarAds = await CarAd.find().populate("sponsorship");
+    const matchingCarAds = CarAds.filter((carAd) => {
+      return (
+        carAd.sponsorship &&
+        carAd.sponsorship.redeemed === true &&
+        carAd.sponsorship.features.includes(feature)
+      );
+    });
+
+    res.status(200).json(matchingCarAds);
+  } catch (error) {
+    console.error("Error searching CarAds by feature:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 // const delete_unused_photos = async (req, res) => {
 //   try {
 //     // Find all photo paths from CarAds
@@ -427,5 +471,6 @@ module.exports = {
   getCarAdById,
   searchCarAds,
   getCarAdByUserId,
+  searchCarAdsByFeature,
   // delete_unused_photos,
 };

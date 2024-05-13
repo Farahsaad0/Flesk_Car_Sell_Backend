@@ -1,3 +1,4 @@
+const { response } = require("express");
 const Job = require("../Models/Job");
 const User = require("../Models/User");
 const Expert = require("../Models/expert");
@@ -131,12 +132,13 @@ const acceptJob = async (req, res) => {
 
     console.log(paymentResponse);
     console.log(paymentResponse.payUrl);
-
+    const currentDate = new Date(Date.now());
+    const formattedDate = currentDate.toLocaleDateString();
     const variables = {
       type: "expert consultation",
       total: job.expert.ExpertId.prix,
       amount: job.expert.ExpertId.prix,
-      transactionDate: Date.now(),
+      transactionDate: formattedDate,
       paymentLink: paymentResponse.payUrl,
     };
 
@@ -175,6 +177,20 @@ const rejectJob = async (req, res) => {
     await emailSender(clientEmail, subject, message);
 
     res.status(200).json({ success: true, data: job });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
+const getAssignedExpertIdsForCarAndClient = async (req, res) => {
+  const carAdId = req.params.carAdId;
+  const client = req.userId;
+  try {
+    const jobs = await Job.find({ client: client, car: carAdId });
+    const expertIds = jobs.map((job) => job.expert);
+    console.log(expertIds)
+    res.json(expertIds);
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, error: "Server Error" });
@@ -220,4 +236,5 @@ module.exports = {
   acceptJob,
   rejectJob,
   getJobsByClientId,
+  getAssignedExpertIdsForCarAndClient,
 };

@@ -14,17 +14,14 @@ const handleRefreshToken = async (req, res) => {
     // const Role = Object.values(foundUser.Role);
     const Role = foundUser.Role;
     const accessToken = jwt.sign(
-      {
-        email: decoded.email,
-        role: Role,
-      },
+      { userId: foundUser._id, email: decoded.email, role: Role },
       process.env.JWT_PASS,
       { expiresIn: "30s" }
     );
 
     const { Password, ...userDetails } = foundUser.toObject();
-    
-    res.json({ Role, accessToken , User: userDetails});
+
+    res.json({ Role, accessToken, User: userDetails });
   });
 };
 

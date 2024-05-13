@@ -13,7 +13,7 @@ const expertController = require("./Routers/ExpertRoute");
 const adminController = require("./Routers/AdminRoute");
 const logoutController = require("./controllers/logoutController");
 const refreshTokenController = require("./controllers/refreshTokenController");
-const subscriptionController = require("./controllers/subscriptionController");
+const sponsorshipController = require("./controllers/sponsorshipController");
 const jobController = require("./controllers/jobController");
 const authController = require("./controllers/authController");
 const contactController = require("./Routers/ContactRoute");
@@ -72,18 +72,15 @@ app.use(logRequest);
 
 //* authentication routes
 app.post("/login", authController.login);
-app.post("/register", userController.register);
+app.post("/register", authController.register);
+app.post("/resetPassword", authController.resetPassword);
 app.post("/verify", userController.verifyRouteHandler);
 app.get("/logout", logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);
 
 app.get("/getUserData/:id", userController.getUserData);
 //app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
-app.put(
-  "/updateUserData/:id",
-  single_upload,
-  userController.updateUserData
-);
+app.put("/updateUserData/:id", single_upload, userController.updateUserData);
 //* route contact
 app.post("/contact", contactController.contact);
 
@@ -103,6 +100,7 @@ app.get("/carAds", carAdController.getAllCarAds);
 app.put("/:id", verifyJWT, single_upload, carAdController.updateCarAd);
 app.delete("/carAds/:id", verifyJWT, carAdController.deleteCarAd);
 app.get("/carAds/search", carAdController.searchCarAds);
+app.get("/carAds/sponsored", carAdController.searchCarAdsByFeature);
 app.get("/carAds/details/:id", carAdController.getCarAdById); //importantttttt
 
 app.put("/:id/specialite", expertController.updateSpecialite);
@@ -123,19 +121,15 @@ app.get(
   transactionController.getInactivatedSponsorships
 );
 
-//* Subscription routes
-app.post("/subscription", verifyJWT, subscriptionController.createSubscription);
-app.get("/subscriptions", subscriptionController.getAllSubscriptions);
-app.get("/subscription/:id", subscriptionController.getOneSubscription);
-app.put(
-  "/subscription/:id",
-  verifyJWT,
-  subscriptionController.updateSubscription
-);
+//* Sponsorship routes
+app.post("/sponsorship", verifyJWT, sponsorshipController.createSponsorship);
+app.get("/sponsorships", sponsorshipController.getAllSponsorships);
+app.get("/sponsorship/:id", sponsorshipController.getOneSponsorship);
+app.put("/sponsorship/:id", verifyJWT, sponsorshipController.updateSponsorship);
 app.delete(
-  "/subscription/:id",
+  "/sponsorship/:id",
   verifyJWT,
-  subscriptionController.deleteSubscription
+  sponsorshipController.deleteSponsorship
 );
 
 //* Experts routes
@@ -144,12 +138,18 @@ app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.post("/demandeExpert", expertController.requestExpertRole);
+
 //* Job routes
 app.post("/createJob", jobController.createJob);
 app.get("/jobs/:expertId", jobController.getJobsByExpertId);
 app.get("/jobs/:clientId", jobController.getJobsByClientId);
 app.put("/jobs/accept/:jobId", jobController.acceptJob);
 app.put("/jobs/reject/:jobId", jobController.rejectJob);
+app.get(
+  "/jobs/car/:carAdId/assigned-experts",
+  verifyJWT,
+  jobController.getAssignedExpertIdsForCarAndClient
+);
 
 //* admin routes
 app.post("/adminLogin", adminController.adminLogin);
@@ -160,6 +160,7 @@ app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 // app.put("/:id", expertController.updateExpert);
 // app.delete("/:id", expertController.deleteExpert);
 
+//* payment routes
 app.post("/init-payment", paymentController.payment);
 app.get("/konnect/webhook", paymentController.payment_update);
 

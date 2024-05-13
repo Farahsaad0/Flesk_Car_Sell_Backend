@@ -45,6 +45,26 @@ const transactionSchema = new mongoose.Schema(
     sponsorship: {
       type: String,
     },
+    
+    duration: Number,
+
+    features: {
+      type: [
+        {
+          type: String,
+        },
+      ],
+    },
+
+    expirationDate: {
+      type: Date,
+    },
+
+    sponsorshipStatus: {
+      type: String,
+      enum: ["active", "expired", "pending"],
+      default: "active",
+    },
 
     redeemed: Boolean,
   },

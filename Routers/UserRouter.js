@@ -1,71 +1,13 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../Models/User");
-const ExpertProfile = require("../Models/expert");
-const { generateLogToken } = require("../utils");
-const { verifyToken } = require("../utils");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
 
-// Route de création d'utilisateur
-let register = async (req, res) => {
-  try {
-    let { Email, Nom, Prenom, Password, Role, Numéro , Adresse , Spécialité, prix, experience } =
-      req.body;
-
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ Email });
-    if (existingUser) {
-      return res.status(400).send({ message: "Utilisateur déjà existant!" });
-    }
-
-    const verificationCode = Math.floor(100000 + Math.random() * 900000);
-
-    const newUser = new User({
-      Nom: Nom,
-      Prenom: Prenom,
-      Email: Email,
-      Password: await bcrypt.hash(Password, 10),
-      Role: Role,
-      Numéro : Numéro,
-      Adresse : Adresse,
-      Verified_code: verificationCode,
-      Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé",
-    });
-
-    await newUser.save();
-
-    const subject = "Code de vérification pour votre inscription";
-    const message = `Nous sommes ravis de vous voir sur le point de finaliser votre inscription! Votre code de vérification est le suivant : ${verificationCode} . Utilisez ce code pour compléter le processus d'inscription.`;
-
-    if (Role.toLowerCase() === "expert") {
-      const newExpert = new ExpertProfile({
-        spécialité: Spécialité,
-        prix: prix,
-        experience: experience,
-      });
-      await newExpert.save();
-      newUser.ExpertId = newExpert._id;
-      await newUser.save();
-
-      // Envoi du code de vérification par e-mail pour les experts
-      await emailSander(newUser.Email, subject, message);
-    } else {
-      // Envoi du code de vérification par e-mail pour les utilisateurs standards
-      await emailSander(newUser.Email, subject, message);
-    }
-
-    res.status(201).json({ user: newUser });
-  } catch (error) {
-    console.error("Erreur lors de la création de l'utilisateur :", error);
-    res
-      .status(500)
-      .send("Erreur lors de la création de l'utilisateur " + error);
-  }
-};
 
 // Fonction pour envoyer un e-mail de vérification
-const emailSander = async (email, subject, message) => {  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+const emailSender = async (email, subject, message) => {
+  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   try {
     await sendEmail(email, subject, message);
     console.log("E-mail de vérification envoyé avec succès");
@@ -111,91 +53,6 @@ let verifyRouteHandler = async (req, res) => {
   }
 };
 
-// Route de connexion
-// let login = async (req, res) => {
-//   try {
-//     const user = await User.findOne({ Email: req.body.Email });
-//     if (!user) {
-//       return res.status(400).send("Utilisateur non trouvé");
-//     }
-
-//     if (user.Role === "expert" && user.Statut === "En attente") {
-//       return res.status(401).send("Votre compte est en attente d'approbation par l'administrateur");
-//     }
-
-//     const passwordMatch = await bcrypt.compare(
-//       req.body.Password,
-//       user.Password
-//     );
-//     if (!passwordMatch) {
-//       return res.status(401).send("Invalid password");
-//     }
-
-//     const token = generateLogToken(user);
-
-//     res.send({
-//       _id: user._id,
-//       Nom: user.Nom,
-//       Prenom: user.Prenom,
-//       Email: user.Email,
-//       Role: user.Role,
-//       token: token,
-//     });
-//   } catch (error) {
-//     console.error("Erreur lors de la connexion de l'utilisateur :", error);
-//     res.status(500).send("Erreur lors de la connexion de l'utilisateur");
-//   }
-// };
-
-let login = async (req, res) => {
-  try {
-    const { Email, Password } = req.body;
-
-    // Find the user by email
-    const user = await User.findOne({ Email });
-
-    // If user doesn't exist, return error
-    if (!user) {
-      return res.status(400).send("Utilisateur non trouvé");
-    }
-
-    // Check if the user's account is pending approval
-    if (user.Role === "expert" && user.Statut === "En attente") {
-      return res
-        .status(401)
-        .send("Votre compte est en attente d'approbation par l'administrateur");
-    }
-
-    // Compare the provided password with the hashed password stored in the database
-    const passwordMatch = await bcrypt.compare(Password, user.Password);
-
-    // If passwords don't match, return error
-    if (!passwordMatch) {
-      return res.status(401).send("Mot de passe incorrect");
-    }
-
-    // If everything is correct, generate token and send user data with token
-    const token = generateLogToken(user);
-
-    // Include the user ID in the response
-    res.json({
-      _id: user._id, // Include the user ID in the response
-      Nom: user.Nom,
-      Prenom: user.Prenom,
-      Email: user.Email,
-      Role: user.Role,
-      Numéro : user.Numéro,
-      Adresse : user.Adresse,
-      Verified: user.Verified,
-      token: token,
-      Statut: user.Statut,
-    });
-  } catch (error) {
-    console.error("Erreur lors de la connexion de l'utilisateur :", error);
-    res.status(500).send("Erreur lors de la connexion de l'utilisateur");
-  }
-};
-
 // Définition de la fonction pour renvoyer les données de l'utilisateur
 let getUserData = async (req, res) => {
   try {
@@ -215,8 +72,8 @@ let getUserData = async (req, res) => {
       Nom: user.Nom,
       Prenom: user.Prenom,
       Email: user.Email,
-      Numéro : user.Numéro,
-      Adresse : user.Adresse,
+      Numéro: user.Numéro,
+      Adresse: user.Adresse,
       Role: user.Role,
       Statut: user.Statut,
       photo: user.photo,
@@ -232,41 +89,38 @@ let getUserData = async (req, res) => {
   }
 };
 
-/*let updateUserData = async (req, res) => {
+const updateUserData = async (req, res) => {
   try {
-    if (req.file) {
-      const { filename } = req.file;
-      req.body.photo = filename;
-    }
-    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
     const userId = req.params.id;
 
-    // Vérifier si le nouveau mot de passe est présent dans les données de la requête
-    if (req.body.Password) {
-      // Hacher le nouveau mot de passe
-      const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
+    const user = await User.findById(userId);
 
-      // Remplacer le mot de passe en texte clair par le mot de passe haché dans les données de la requête
-      req.body.Password = hashedPassword;
+    if (!user) {
+      return res.status(404).send("User not found");
     }
+    const { oldPassword, newPassword, ...userData } = req.body;
+    // Check if old password is correct
+    if (!(await bcrypt.compare(oldPassword, user.Password))) {
+      return res.status(400).send("Old password is incorrect");
+    }
+    let updatedUserData = { ...userData };
+    if (req.file) {
+      updatedUserData.photo = req.file.filename;
+    }
+    if (newPassword) {
+      // Regular expression pattern for password format (at least 8 characters, at least one uppercase letter, one lowercase letter, one number, and one special character)
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-    // Vérifier si le rôle a été modifié en "Expert"
-    // if (req.body.Role === "Expert") {
-    // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
-    // req.body.Statut = "En attente";
-    // }
-
-    // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
-    const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
+      // Validate new password against the regex pattern
+      if (!passwordRegex.test(newPassword)) {
+        return res.status(400).send("New password does not meet requirements");
+      }
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      updatedUserData.Password = hashedPassword;
+    }
+    const updatedUser = await User.findByIdAndUpdate(userId, updatedUserData, {
       new: true,
     });
-
-    // Si l'utilisateur n'existe pas, retourner une erreur
-    if (!updatedUser) {
-      return res.status(404).send("Utilisateur non trouvé");
-    }
-
-    // Retourner les données de l'utilisateur mises à jour sous forme de réponse JSON
     res.json({
       _id: updatedUser._id,
       Nom: updatedUser.Nom,
@@ -277,85 +131,10 @@ let getUserData = async (req, res) => {
       photo: updatedUser.photo,
     });
   } catch (error) {
-    console.error(
-      "Erreur lors de la mise à jour des données utilisateur :",
-      error
-    );
-    res
-      .status(500)
-      .send("Erreur lors de la mise à jour des données utilisateur");
-  }
-}; */
-
-const updateUserData = async (req, res) => {
-  try {
-    // Vérifier si une photo a été téléchargée
-    let photo;
-    if (req.file) {
-      // Stocker l'URL de la photo dans une variable
-      photo = req.file.filename;
-    }
-
-    // Extraire le token d'authentification de l'en-tête de la requête
-    // const token = req.headers.authorization.split(" ")[1]; // Supposons que le token soit envoyé dans le format 'Bearer token'
-
-    // Vérifier et décoder le token
-    // const decodedToken = verifyToken(token);
-
-    // Si le token est valide, récupérer l'ID de l'utilisateur à partir du token décodé
-    const userId = req.params.id;
-
-    // Vérifier si le nouveau mot de passe est présent dans les données de la requête
-    // if (req.body.Password) {
-      // Hacher le nouveau mot de passe
-      // const hashedPassword = await bcrypt.hash(req.body.Password, 10); // Utilisez une valeur de coût appropriée
-
-      // Remplacer le mot de passe en texte clair par le mot de passe haché dans les données de la requête
-      // req.body.Password = hashedPassword;
-    // }
-
-    // Vérifier si le rôle a été modifié en "Expert"
-    // if (req.body.Role === "Expert") {
-      // Si le rôle a été changé en "Expert", définir le statut sur "En attente"
-      // req.body.Statut = "En attente";
-    // }
-
-    // Si une URL de photo existe, ajoutez-la aux données de la requête
-    if (photo) {
-      req.body.photo = photo; 
-    }
-
-    // Trouver et mettre à jour l'utilisateur par son ID dans la base de données
-    const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
-      new: true,
-    });
-
-    // Si l'utilisateur n'existe pas, retourner une erreur
-    if (!updatedUser) {
-      return res.status(404).send("Utilisateur non trouvé");
-    }
-
-    // Retourner les données de l'utilisateur mises à jour sous forme de réponse JSON
-    res.json({
-      _id: updatedUser._id,
-      Nom: updatedUser.Nom,
-      Prenom: updatedUser.Prenom,
-      Email: updatedUser.Email,
-      Role: updatedUser.Role,
-      Statut: updatedUser.Statut,
-      photo: updatedUser.photo, // Retourner l'URL de la photo mise à jour
-    });
-  } catch (error) {
-    console.error(
-      "Erreur lors de la mise à jour des données utilisateur :",
-      error
-    );
-    res
-      .status(500)
-      .send("Erreur lors de la mise à jour des données utilisateur");
+    console.error("Error updating user data:", error);
+    res.status(500).send("Error updating user data");
   }
 };
-
 
 const getAllUsers = async (req, res) => {
   try {
@@ -463,7 +242,7 @@ let blockUser = async (req, res) => {
     // user.Statut = "Bloqué";
 
     // await user.save();
-    await emailSander(user.Email, subject, message);
+    await emailSender(user.Email, subject, message);
 
     res.status(200).json({ message: "Utilisateur bloqué avec succès." });
   } catch (error) {
@@ -495,13 +274,9 @@ let unblockUser = async (req, res) => {
   }
 };
 
-
-
-
-
 module.exports = {
-  login,
-  register,
+  // login,
+  // register,
   verifyRouteHandler,
   getAllUsers,
   getPendingExperts,
@@ -510,5 +285,4 @@ module.exports = {
   updateUserData,
   blockUser,
   unblockUser,
-  
 };

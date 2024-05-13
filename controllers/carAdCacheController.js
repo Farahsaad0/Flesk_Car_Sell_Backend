@@ -1,5 +1,5 @@
 const express = require("express");
-const CarAdCache = require("../models/carAdCache");
+const CarAdCache = require("../Models/carAdCache");
 
 // Create route
 const createCarAdCache = async (req, res) => {

@@ -65,7 +65,8 @@ const carAdSchema = new mongoose.Schema({
   },
 
   sponsorship: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Transaction",
   },
 
   utilisateur: {

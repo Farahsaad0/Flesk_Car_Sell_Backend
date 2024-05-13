@@ -3,7 +3,7 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const Transaction = require("../Models/transaction");
 const sendEmail = require("../utils/sendEmail");
-const Subscription = require("../Models/Subscription");
+const Sponsorship = require("../Models/sponsorship");
 
 const payment = async (req, res) => {
   let receivedData = req.body;
@@ -16,7 +16,7 @@ const payment = async (req, res) => {
 
   if (receivedData.type === "expert consultation") {
     console.log("first 1");
-    amount = receivedData.amount * 10;
+    amount = receivedData.amount * 1000;
     recipient = receivedData.expertId;
     job = receivedData.jobId;
     type = receivedData.type;
@@ -28,7 +28,7 @@ const payment = async (req, res) => {
     type = receivedData.type;
   } else {
     console.log("first 3");
-    sponsorship = await Subscription.findById(receivedData.subscription);
+    sponsorship = await Sponsorship.findById(receivedData.sponsorship);
     amount = sponsorship.price * 10;
     type = "sponsorship";
     redirectToOnSuccess = "https://8n7vlqww-3000.euw.devtunnels.ms/create-ad";
@@ -96,7 +96,10 @@ const payment = async (req, res) => {
 
     if (sponsorship) {
       transactionData.sponsorship = sponsorship.type;
-      transactionData.redeemed = false;
+      transactionData.features = sponsorship.features;
+
+      transactionData.duration = sponsorship.duration;
+      transactionData.sponsorshipStatus = "pending";
     }
     if (job) {
       transactionData.job = job;
@@ -145,7 +148,7 @@ const payment_update = async (req, res) => {
     const status = response.data.payment.status;
     const transaction = await Transaction.findOne({
       paymentId: paymentRef,
-    }).populate("userId", ["Email"]);
+    }).populate("sender", ["Email"]);
     if (transaction) {
       transaction.paymentStatus = status;
       await transaction.save();
@@ -153,7 +156,7 @@ const payment_update = async (req, res) => {
 
     const subject = "Votre Reçue de transaction";
     const amount = transaction.amount;
-    const clientEmail = transaction.userId.Email;
+    const clientEmail = transaction.sender.Email;
     const message = `votre transaction de mentent: ${amount} a éte effectuer avec sucées.`;
 
     res.status(200).json({ message: "Payment status updated" });
@@ -165,7 +168,7 @@ const payment_update = async (req, res) => {
       transactionDate: new Date(
         response.data.payment.updatedAt
       ).toLocaleDateString(),
-      subscription: transaction.sponsorship,
+      sponsorship: transaction.sponsorship,
     };
 
     await emailSender(clientEmail, subject, variables);

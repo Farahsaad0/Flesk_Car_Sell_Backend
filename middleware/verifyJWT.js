@@ -7,7 +7,13 @@ const verifyJWT = (req, res, next) => {
   console.log(token);
   jwt.verify(token, process.env.JWT_PASS, (err, decoded) => {
     if (err) return res.sendStatus(403); //invalid token
-    req.user = decoded.email;
+    req.userId = decoded.userId;
+    console.log(req.userId)
+    console.log(req.userId)
+    console.log(req.userId)
+    console.log(req.userId)
+    console.log(req.userId)
+    console.log("===============")
     req.role = decoded.role;
     next();
   });
