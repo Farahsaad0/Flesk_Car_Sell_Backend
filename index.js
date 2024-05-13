@@ -74,6 +74,7 @@ app.use(logRequest);
 app.post("/login", authController.login);
 app.post("/register", authController.register);
 app.post("/resetPassword", authController.resetPassword);
+app.put("/changePassword/:token", authController.setPassword);
 app.post("/verify", userController.verifyRouteHandler);
 app.get("/logout", logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);

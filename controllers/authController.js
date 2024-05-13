@@ -87,7 +87,8 @@ const register = async (req, res) => {
     console.log(variables.type + " << from authController.");
     await emailSender(newUser.Email, subject, variables);
 
-    res.status(201).json({ user: newUser });
+    res.status(201).json({ message: "User registered successfully.", user: newUser });
+
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur :", error);
     res
@@ -162,16 +163,22 @@ const resetPassword = async (req, res) => {
     // Generate reset password token
     const resetToken = jwt.sign(
       { userId: user._id },
-      process.env.RESET_PASS_TOKEN,
+      process.env.JWT_RESET_PASS_TOKEN,
       { expiresIn: "1h" }
     );
 
     // Send reset password link to the user's email
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL}/changePassword/${resetToken}`;
     const subject = "Password Reset Link";
     const message = `Hello ${user.Prenom},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you didn't request this, please ignore this email.`;
 
-    await sendEmail(user.Email, subject, message);
+    const variables = {
+      type: "verification Code",
+      code_de_verification: resetLink,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+
+    await sendEmail(user.Email, subject, variables);
 
     res
       .status(200)
@@ -181,6 +188,57 @@ const resetPassword = async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to reset password. Please try again later." });
+  }
+};
+
+const setPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    // Validate password
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        message: "Le mot de passe doit contenir au moins 8 caractères.",
+      });
+    }
+
+    // Validate password format
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre.",
+      });
+    }
+console.log(token)
+console.log(token)
+console.log(token)
+    // Decode the token to get the user ID
+    const decodedToken = jwt.verify(token, process.env.JWT_RESET_PASS_TOKEN);
+    const userId = decodedToken.userId;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    // If user not found, return error
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the user's password
+    user.Password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    console.error("Error setting new password:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to set new password. Please try again later." });
   }
 };
 
@@ -205,4 +263,5 @@ module.exports = {
   login,
   register,
   resetPassword,
+  setPassword
 };
