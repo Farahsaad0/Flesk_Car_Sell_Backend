@@ -57,11 +57,6 @@ const carAdCacheSchema = new mongoose.Schema({
   },
 });
 
-// Indexes
-carAdCacheSchema.index({ marque: 1, modele: 1 });
-carAdCacheSchema.index({ prix: 1 });
-carAdCacheSchema.index({ annee: 1 });
-
 const CarAdCache = mongoose.model("CarAdCache", carAdCacheSchema);
 
 module.exports = CarAdCache;
