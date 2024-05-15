@@ -3,6 +3,7 @@ const router = express.Router();
 const Expert = require("../Models/expert");
 const User = require("../Models/User");
 const sendEmail = require("../utils/sendEmail");
+const Job = require("../Models/Job");
 
 // Mettre à jour la spécialité de l'expert
 let updateSpecialite = async (req, res) => {
@@ -221,7 +222,8 @@ let deleteExpert = async (req, res) => {
   }
 };
 
-const emailSander = async (email, subject, message) => {  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+const emailSander = async (email, subject, message) => {
+  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   // const subject = "Code de vérification pour votre inscription";
   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
@@ -236,7 +238,6 @@ const emailSander = async (email, subject, message) => {  //! ___REMEMBER_TO_PUT
     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
   }
 };
-
 
 // Fonction pour envoyer une demande pour devenir expert
 const requestExpertRole = async (req, res) => {
@@ -270,10 +271,35 @@ const requestExpertRole = async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error("Erreur lors de la demande pour devenir expert :", error);
-    res.status(500).json({ message: "Erreur lors de la demande pour devenir expert." });
+    res
+      .status(500)
+      .json({ message: "Erreur lors de la demande pour devenir expert." });
   }
 };
+// Fonction pour compter le nombre de jobs acceptés par chaque expert
+const getJobsCountByExpert = async (req, res) => {
+  try {
+    // Récupérer l'identifiant de l'expert à partir de la requête (par exemple, dans le corps ou les paramètres de la requête)
+    const expertId = req.params.id; // Assumant que l'identifiant de l'expert est dans les paramètres de la requête
 
+    // Utiliser la méthode aggregate pour effectuer une opération de pipeline sur la collection Job
+    const jobCount = await Job.countDocuments({
+      expert: expertId,
+      accepted: "accepted",
+    });
+
+    console.log(jobCount);
+    console.log(jobCount);
+    console.log(jobCount);
+    console.log(jobCount);
+
+    // Répondre avec les résultats au format JSON
+    res.json({ jobCount });
+  } catch (err) {
+    // En cas d'erreur, répondre avec un code d'erreur 500 et un message d'erreur
+    res.status(500).json({ message: err.message });
+  }
+};
 
 module.exports = {
   updateSpecialite,
@@ -285,4 +311,5 @@ module.exports = {
   rejeterExpert,
   getApprovedExperts,
   requestExpertRole,
+  getJobsCountByExpert,
 };
