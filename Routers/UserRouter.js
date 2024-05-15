@@ -77,9 +77,9 @@ let getUserData = async (req, res) => {
       Role: user.Role,
       Statut: user.Statut,
       photo: user.photo,
-      experience: user.ExpertId.experience,
-      prix: user.ExpertId.prix,
-      spécialité: user.ExpertId.spécialité,
+      experience: user.ExpertId?.experience,
+      prix: user.ExpertId?.prix,
+      spécialité: user.ExpertId?.spécialité,
     });
   } catch (error) {
     console.error(
