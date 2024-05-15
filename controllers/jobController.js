@@ -58,6 +58,33 @@ const getJobsByExpertId = async (req, res) => {
   }
 };
 
+const getJobById = async (req, res) => {
+  try {
+    const jobId = req.params.id; // Corrected variable name
+
+    // Find the job by jobId and populate related fields
+    const job = await Job.findById(jobId)
+      .populate("client", ["Nom", "Prenom", "Email"])
+      .populate("car", [
+        "photos",
+        "photo",
+        "prix",
+        "titre",
+        "location",
+        "description",
+      ]);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+
+    res.status(200).json({ success: true, data: job });
+  } catch (error) {
+    console.error("Error fetching job:", error); // More detailed error logging
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
 const getJobsByClientId = async (req, res) => {
   try {
     const clientId = req.params.clientId;
@@ -109,14 +136,13 @@ const acceptJob = async (req, res) => {
       return res.status(404).json({ success: false, message: "Job not found" });
     }
 
-    const message =
-      "Nous tenons à vous informer que votre demande a été accepter par l'expert. :) Vous pouvez payer via: " +
-      job.expert.ExpertId.konnect_link;
+    // const message =
+    //   "Nous tenons à vous informer que votre demande a été accepter par l'expert. :) Vous pouvez payer via: " +
+    //   job.expert.ExpertId.konnect_link;
     const clientEmail = job.client.Email;
 
     job.accepted = "accepted";
     job.acceptDate = Date.now();
-    await job.save();
 
     // await emailSender(clientEmail, subject, message);
 
@@ -130,6 +156,9 @@ const acceptJob = async (req, res) => {
 
     const paymentResponse = await payment({ body: paymentReqBody }, res);
 
+    job.paymentLink = paymentResponse.payUrl;
+    await job.save();
+    
     console.log(paymentResponse);
     console.log(paymentResponse.payUrl);
     const currentDate = new Date(Date.now());
@@ -183,13 +212,37 @@ const rejectJob = async (req, res) => {
   }
 };
 
+const cancelJob = async (req, res) => {
+  try {
+    const jobId = req.params.jobId;
+
+    // Find the job by jobId
+    const job = await Job.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+
+    // Update job status to cancelled
+    job.accepted = "cancelled";
+    await job.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Job cancelled successfully" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
 const getAssignedExpertIdsForCarAndClient = async (req, res) => {
   const carAdId = req.params.carAdId;
   const client = req.userId;
   try {
     const jobs = await Job.find({ client: client, car: carAdId });
     const expertIds = jobs.map((job) => job.expert);
-    console.log(expertIds)
+    console.log(expertIds);
     res.json(expertIds);
   } catch (error) {
     console.error(error.message);
@@ -197,21 +250,32 @@ const getAssignedExpertIdsForCarAndClient = async (req, res) => {
   }
 };
 
-// const emailSender = async (email, subject, message) => {
-//   // const subject = "Code de vérification pour votre inscription";
-//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+const sendMessage = async (req, res) => {
+  const jobId = req.params.id;
+  const { sender, message } = req.body;
 
-//   try {
-//     await sendEmail(email, subject, message);
-//     console.log("E-mail de notification envoyé avec succès");
-//   } catch (error) {
-//     console.error(
-//       "Erreur lors de l'envoi de l'e-mail de notification :",
-//       error
-//     );
-//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
-//   }
-// };
+  try {
+    // Find the job by jobId
+    const job = await Job.findById(jobId);
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+
+    // Add the new message to the chat array
+    job.chat.push({ sender, message });
+
+    // Save the updated job
+    await job.save();
+
+    res
+      .status(201)
+      .json({ success: true, message: "Message sent successfully" });
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
 
 const emailSender = async (email, subject, variables) => {
   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
@@ -233,8 +297,11 @@ const emailSender = async (email, subject, variables) => {
 module.exports = {
   createJob,
   getJobsByExpertId,
+  getJobById,
   acceptJob,
   rejectJob,
   getJobsByClientId,
   getAssignedExpertIdsForCarAndClient,
+  sendMessage,
+  cancelJob,
 };

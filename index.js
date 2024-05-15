@@ -142,10 +142,13 @@ app.post("/demandeExpert", expertController.requestExpertRole);
 
 //* Job routes
 app.post("/createJob", jobController.createJob);
-app.get("/jobs/:expertId", jobController.getJobsByExpertId);
-app.get("/jobs/:clientId", jobController.getJobsByClientId);
+app.get("/job/:id", jobController.getJobById);
+app.post("/job/:id/chat", jobController.sendMessage);
+app.get("/jobs/expert/:expertId", jobController.getJobsByExpertId);
+app.get("/jobs/client/:clientId", jobController.getJobsByClientId);
 app.put("/jobs/accept/:jobId", jobController.acceptJob);
 app.put("/jobs/reject/:jobId", jobController.rejectJob);
+app.put("/jobs/cancel/:jobId", jobController.cancelJob);
 app.get(
   "/jobs/car/:carAdId/assigned-experts",
   verifyJWT,

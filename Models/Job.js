@@ -1,5 +1,21 @@
 const mongoose = require("mongoose");
 
+const chatSchema = new mongoose.Schema({
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const jobSchema = new mongoose.Schema({
   client: {
     type: mongoose.Schema.Types.ObjectId,
@@ -21,7 +37,7 @@ const jobSchema = new mongoose.Schema({
 
   accepted: {
     type: String,
-    enum: ["pending", "accepted", "rejected",],
+    enum: ["pending", "accepted", "rejected", "cancelled"],
     default: "pending",
   },
 
@@ -44,11 +60,18 @@ const jobSchema = new mongoose.Schema({
     type: Date,
   },
 
+  paymentLink: String,
+
   paymentStatus: {
     type: String,
-    enum: ["pending", "completed", "cancelled",],
+    enum: ["pending", "completed", "cancelled"],
     default: "pending",
   },
+
+  chat: [chatSchema],
 });
+
+// Indexes
+jobSchema.index({ client: 1, expert: 1 }); // Example index on client and expert fields
 
 module.exports = mongoose.model("job", jobSchema);
