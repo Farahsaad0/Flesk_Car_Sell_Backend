@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const User = require("../Models/User");
 const sendEmail = require("../utils/sendEmail");
 const uuid = require("uuid");
-
+const Expert = require("../Models/expert");
 
 // Fonction pour envoyer un e-mail de vérification
 const emailSender = async (email, subject, message) => {
@@ -59,7 +59,7 @@ let getUserData = async (req, res) => {
     const userId = req.params.id;
 
     // Trouver l'utilisateur par son ID dans la base de données
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).populate("ExpertId");
 
     // Si l'utilisateur n'existe pas, retourner une erreur
     if (!user) {
@@ -77,6 +77,9 @@ let getUserData = async (req, res) => {
       Role: user.Role,
       Statut: user.Statut,
       photo: user.photo,
+      experience: user.ExpertId.experience,
+      prix: user.ExpertId.prix,
+      spécialité: user.ExpertId.spécialité,
     });
   } catch (error) {
     console.error(
@@ -98,7 +101,14 @@ const updateUserData = async (req, res) => {
     if (!user) {
       return res.status(404).send("User not found");
     }
-    const { oldPassword, newPassword, ...userData } = req.body;
+
+    const { oldPassword, newPassword, Role, ...userData } = req.body;
+
+    if (user.Role === "Expert") {
+      const { spécialité, prix, experience } = req.body;
+      // Only update expert-specific fields
+      await Expert.findByIdAndUpdate(user.ExpertId, { spécialité, prix, experience });
+    }
     // Check if old password is correct
     if (!(await bcrypt.compare(oldPassword, user.Password))) {
       return res.status(400).send("Old password is incorrect");
