@@ -5,6 +5,10 @@ const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const { single_upload, multi_upload } = require("./multer-config");
 const verifyJWT = require("./middleware/verifyJWT");
+const socketIo = require("socket.io");
+const http = require("http");
+const Job = require("./Models/Job");
+// const cv = require("./opencv/opencv");
 
 // Import controllers
 const userController = require("./Routers/UserRouter");
@@ -23,8 +27,10 @@ const transactionController = require("./controllers/transactionController");
 
 dotenv.config();
 
-const port = process.env.PORT;
+const port = process.env.PORT || 8000;
 const app = express();
+
+// console.log(cv);
 
 // Middleware
 app.use(express.json());
@@ -39,32 +45,54 @@ app.use(
       "https://8n7vlqww-3000.euw.devtunnels.ms",
       "http://localhost:8000",
     ],
-    // origin: function (origin, callback) {
-    //   // Allow requests with no origin (like mobile apps or curl requests)
-    //   if (!origin) return callback(null, true);
-
-    //   // Check if the request origin is allowed
-    //   const allowedOrigins = ["http://*:*"];
-    //   if (allowedOrigins.indexOf(origin) === -1) {
-    //     const msg =
-    //       "__-__-_The CORS policy for this site does not allow access from the specified origin.";
-    //     return callback(new Error(msg), false);
-    //   }
-
-    //   return callback(null, true);
-    // },
   })
 );
 // app.use(cors());
 app.use(cookieParser());
+
+const server = http.createServer(app);
+server.listen(8001, () => {
+  console.log("live chat server running on port 8001");
+});
+const io = socketIo(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://8n7vlqww-3000.euw.devtunnels.ms",
+      "http://localhost:8000",
+    ],
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("New client connected");
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+
+  socket.on("sendMessage", async ({ jobId, sender, message, timestamp }) => {
+    try {
+      const job = await Job.findById(jobId);
+      if (job) {
+        job.chat.push({ sender, message });
+        await job.save();
+        io.emit("receiveMessage", { jobId, sender, message, timestamp });
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  });
+});
 
 // Logging middleware function
 const logRequest = (req, res, next) => {
   console.log("Request URL:", req.url);
   console.log("Request Method:", req.method);
   console.log("Request Headers:", req.headers);
-  console.log("Request Body:", req.file); // This will log the request body, if it's parsed by body-parser or similar middleware
-  next(); // Call next() to pass control to the next middleware or route handler
+  console.log("Request Body:", req.file);
+  next();
 };
 
 // Mount the logging middleware
@@ -98,7 +126,7 @@ app.get("/getCarAdByUserId/:userId", carAdController.getCarAdByUserId);
 
 app.get("/carAds", carAdController.getAllCarAds);
 // app.delete("/delete_unused_photos", carAdController.delete_unused_photos);
-app.put("/:id", verifyJWT, single_upload, carAdController.updateCarAd);
+app.put("/carAd/update/:id", multi_upload, carAdController.updateCarAd);
 app.delete("/carAds/:id", verifyJWT, carAdController.deleteCarAd);
 app.get("/carAds/search", carAdController.searchCarAds);
 app.get("/carAds/sponsored", carAdController.searchCarAdsByFeature);
@@ -143,7 +171,7 @@ app.get("/nbExpertisme/:id", expertController.getJobsCountByExpert);
 //* Job routes
 app.post("/createJob", jobController.createJob);
 app.get("/job/:id", jobController.getJobById);
-app.post("/job/:id/chat", jobController.sendMessage);
+// app.post("/job/:id/chat", jobController.sendMessage);
 app.get("/jobs/expert/:expertId", jobController.getJobsByExpertId);
 app.get("/jobs/client/:clientId", jobController.getJobsByClientId);
 app.put("/jobs/accept/:jobId", jobController.acceptJob);

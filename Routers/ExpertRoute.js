@@ -83,7 +83,7 @@ let getApprovedExperts = async (req, res) => {
 //     }
 //     res.json(expert);
 
-//     await emailSander(expert.Email, subject, message)
+//     await emailSender(expert.Email, subject, message)
 //   } catch (error) {
 //     console.error("Erreur lors du blocage de l'expert :", error);
 //     res.status(500).json({ message: "Erreur lors du blocage de l'expert." });
@@ -125,7 +125,7 @@ let approuverExpert = async (req, res) => {
       { Statut: "Approuvé" }
     );
 
-    await emailSander(updatedExpert.Email, subject, message);
+    await emailSender(updatedExpert.Email, subject, message);
   } catch (error) {
     console.error("Erreur lors de l'approbation de l'expert :", error);
     res
@@ -156,7 +156,7 @@ let rejeterExpert = async (req, res) => {
       { Statut: "Rejeté" }
     );
 
-    await emailSander(updatedExpert.Email, subject, message);
+    await emailSender(updatedExpert.Email, subject, message);
   } catch (error) {
     console.error("Erreur lors de l'approbation de l'expert :", error);
     res
@@ -222,7 +222,7 @@ let deleteExpert = async (req, res) => {
   }
 };
 
-const emailSander = async (email, subject, message) => {
+const emailSender = async (email, subject, message) => {
   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   // const subject = "Code de vérification pour votre inscription";
   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;

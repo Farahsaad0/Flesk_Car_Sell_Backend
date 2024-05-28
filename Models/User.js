@@ -49,9 +49,9 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: false,
   },
-  photo: {
-    type: String,
-  },
+  // photo: {
+  //   type: String,
+  // },
 
   ExpertId: {
     type: mongoose.Schema.Types.ObjectId,

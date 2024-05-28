@@ -146,9 +146,11 @@ const payment_update = async (req, res) => {
     );
 
     const status = response.data.payment.status;
+    
     const transaction = await Transaction.findOne({
       paymentId: paymentRef,
     }).populate("sender", ["Email"]);
+
     if (transaction) {
       transaction.paymentStatus = status;
       await transaction.save();

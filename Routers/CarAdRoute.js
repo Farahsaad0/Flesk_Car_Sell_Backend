@@ -180,7 +180,7 @@ const createCarAd = async (req, res) => {
     const filenames = req.files.map((file) => file.filename);
 
     // Create a new car ad instance
-    const newCarAd = new CarAd({
+    const carAdData = new CarAd({
       titre,
       description,
       prix,
@@ -188,13 +188,19 @@ const createCarAd = async (req, res) => {
       annee,
       marque,
       photos: filenames,
-      sponsorship,
       location,
       utilisateur,
     });
 
+    if (sponsorship && sponsorship.length > 0) {
+      carAdData.sponsorship = sponsorship;
+    }
+
+    const newCarAd = new CarAd(carAdData);
+
     // Save the new car ad to the database
     const ad = await newCarAd.save();
+
     if (sponsorship) {
       const transaction = await Transaction.findById(sponsorship);
 
@@ -251,8 +257,14 @@ const updateCarAd = async (req, res) => {
     } = req.body;
     const { id } = req.params;
 
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).send("Please provide at least one photo");
+    }
+
+    const photos = req.files.map((file) => file.filename);
+
     // Check if a photo has been uploaded
-    const photo = req.file ? req.file.filename : null;
+    // const photo = req.file ? req.file.filename : null;
 
     // Find the existing car ad by ID and update its details
     let updatedDetails = {
@@ -267,8 +279,8 @@ const updateCarAd = async (req, res) => {
     };
 
     // Update the photo only if a new one is provided
-    if (photo) {
-      updatedDetails.photo = photo;
+    if (photos) {
+      updatedDetails.photos = photos;
     }
 
     // Find and update the car ad in the database
@@ -314,7 +326,12 @@ let getCarAdById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const ad = await CarAd.findById(id);
+    const ad = await CarAd.findById(id).populate("utilisateur", [
+      "Nom",
+      "Prenom",
+      "Numéro",
+      "photo",
+    ]);
     if (!ad) {
       return res.status(404).json({ error: "Annonce non trouvée" });
     }
@@ -386,9 +403,9 @@ let searchCarAds = async (req, res) => {
     if (adresse) {
       query.adresse = adresse;
     }
-
+    console.log(query);
     // Recherche des annonces de voiture en fonction des critères spécifiés
-    const ads = await CarAd.find(query);
+    const ads = await CarAd.find(query).populate("sponsorship");
     res.status(200).json(ads); // Renvoie les annonces correspondantes
   } catch (error) {
     console.error(

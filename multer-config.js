@@ -44,7 +44,7 @@ const single_upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 5, // Limit file size to 5 MB
+    fileSize: 1024 * 1024 * 20, // Limit file size to 20 MB
   },
 }).single("photo"); // Change this field as per your requirement
 
