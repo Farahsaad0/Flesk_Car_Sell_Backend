@@ -158,7 +158,7 @@ const acceptJob = async (req, res) => {
 
     job.paymentLink = paymentResponse.payUrl;
     await job.save();
-    
+
     console.log(paymentResponse);
     console.log(paymentResponse.payUrl);
     const currentDate = new Date(Date.now());
@@ -277,6 +277,62 @@ const sendMessage = async (req, res) => {
   }
 };
 
+const uploadDocuments = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+    const files = req.files.map((file) => file.filename);
+    job.documents.push(...files);
+    await job.save();
+    res.status(200).json({ success: true, data: job });
+  } catch (error) {
+    console.error("Error uploading files:", error);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
+const deleteDocument = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const fileName = req.params.fileName;
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+    const filePath = path.join(__dirname, "../public/uploads", fileName);
+    fs.unlink(filePath, async (err) => {
+      if (err) {
+        console.error("Error deleting file:", err);
+        return res
+          .status(500)
+          .json({ success: false, error: "Error deleting file" });
+      }
+      job.documents = job.documents.filter((doc) => doc !== fileName);
+      await job.save();
+      res
+        .status(200)
+        .json({ success: true, message: "File deleted successfully" });
+    });
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
+const fetchAllDocuments = async (req, res) => {
+  try {
+    const jobs = await Job.find({ documents: { $ne: [] } }).select("documents");
+    const files = jobs.reduce((acc, job) => acc.concat(job.documents), []);
+    res.status(200).json({ success: true, data: files });
+  } catch (error) {
+    console.error("Error fetching files:", error);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+};
+
 const emailSender = async (email, subject, variables) => {
   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   // const subject = "Code de vérification pour votre inscription";
@@ -304,4 +360,7 @@ module.exports = {
   getAssignedExpertIdsForCarAndClient,
   sendMessage,
   cancelJob,
+  uploadDocuments,
+  fetchAllDocuments,
+  deleteDocument,
 };

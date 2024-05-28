@@ -7,7 +7,7 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = "./public/uploads/";
     // Check if upload directory exists, create if not
-    console.log("point 1 ");
+    console.log("_1_ ");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -38,15 +38,33 @@ const fileFilter = (req, file, cb) => {
     );
   }
 };
+// Filter for allowed file types
+const jobFilesFilter = (req, file, cb) => {
+  console.log("filtering");
+  if (
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "application/pdf"
+  ) {
+    cb(null, true); // Accept the file
+  } else {
+    cb(
+      new Error(
+        "Unsupported file format. Please upload an image in JPEG, JPG, PNG, or PDF format."
+      )
+    );
+  }
+};
 
 // Single file upload instance
 const single_upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 1024 * 1024 * 20, // Limit file size to 20 MB
+    fileSize: 1024 * 1024 * 5, 
   },
-}).single("photo"); // Change this field as per your requirement
+}).single("photo");
 
 // Multiple file upload instance
 const multi_upload = multer({
@@ -58,7 +76,18 @@ const multi_upload = multer({
   },
 }).array("photos", 10);
 
+// Multiple file upload instance for job-related documents
+const job_multi_upload = multer({
+  storage,
+  fileFilter: jobFilesFilter,
+  limits: {
+    fileSize: 1024 * 1024 * 5,
+    files: 10,
+  },
+}).array("documents", 10);
+
 module.exports = {
   single_upload,
   multi_upload,
+  job_multi_upload,
 };

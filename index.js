@@ -3,7 +3,11 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
-const { single_upload, multi_upload } = require("./multer-config");
+const {
+  job_multi_upload,
+  single_upload,
+  multi_upload,
+} = require("./multer-config");
 const verifyJWT = require("./middleware/verifyJWT");
 const socketIo = require("socket.io");
 const http = require("http");
@@ -168,10 +172,14 @@ app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.post("/demandeExpert", expertController.demandeExpertRole);
 app.get("/nbExpertisme/:id", expertController.getJobsCountByExpert);
+
 //* Job routes
 app.post("/createJob", jobController.createJob);
 app.get("/job/:id", jobController.getJobById);
-// app.post("/job/:id/chat", jobController.sendMessage);
+app.post("/job/:id/upload", job_multi_upload, jobController.uploadDocuments);
+app.delete("/job/:id/files/:fileName", jobController.deleteDocument);
+app.get("/job/files", jobController.fetchAllDocuments);
+// app.post("/job/:id/chat", jobController.sendMessage); // depricated
 app.get("/jobs/expert/:expertId", jobController.getJobsByExpertId);
 app.get("/jobs/client/:clientId", jobController.getJobsByClientId);
 app.put("/jobs/accept/:jobId", jobController.acceptJob);
@@ -184,7 +192,7 @@ app.get(
 );
 
 //* admin routes
-app.post("/adminLogin", adminController.adminLogin);
+// app.post("/adminLogin", adminController.adminLogin);
 app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
 app.put("/users/:id/block", verifyJWT, userController.blockUser);
 app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);

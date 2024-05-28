@@ -69,6 +69,8 @@ const jobSchema = new mongoose.Schema({
   },
 
   chat: [chatSchema],
+
+  documents: [String],
 });
 
 // Indexes
