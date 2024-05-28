@@ -138,7 +138,7 @@ app.get("/experts", expertController.getApprovedExperts);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
-app.post("/demandeExpert", expertController.requestExpertRole);
+app.post("/demandeExpert", expertController.demandeExpertRole);
 app.get("/nbExpertisme/:id", expertController.getJobsCountByExpert);
 //* Job routes
 app.post("/createJob", jobController.createJob);

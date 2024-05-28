@@ -240,7 +240,7 @@ const emailSander = async (email, subject, message) => {
 };
 
 // Fonction pour envoyer une demande pour devenir expert
-const requestExpertRole = async (req, res) => {
+const demandeExpertRole = async (req, res) => {
   try {
     const { userId, spécialité, prix, experience } = req.body;
 
@@ -310,6 +310,6 @@ module.exports = {
   deleteExpert,
   rejeterExpert,
   getApprovedExperts,
-  requestExpertRole,
+  demandeExpertRole,
   getJobsCountByExpert,
 };
