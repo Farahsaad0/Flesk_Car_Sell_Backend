@@ -3,11 +3,11 @@ const Schema = mongoose.Schema;
 
 // Define enum for features
 const featureEnum = [
-  "Highlighted Listing",
-  "Featured in Search Results",
-  "Featured on Homepage",
-  "Priority Support",
-  "Extended Listing Duration",
+  
+"Annonce mise en avant",
+"Mis en avant dans les résultats de recherche",
+"Mis en avant sur la page d'accueil",
+"Durée de publication prolongée",
 ];
 
 const sponsorshipSchema = new Schema({
