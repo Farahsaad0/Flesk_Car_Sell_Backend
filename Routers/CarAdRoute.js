@@ -235,9 +235,26 @@ const createCarAd = async (req, res) => {
 };
 
 let getAllCarAds = async (req, res) => {
+  const sortField = req.query.sortField || "date";
+  const sortOrder = parseInt(req.query.sortOrder) || -1;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
   try {
-    const ads = await CarAd.find().populate("sponsorship");
-    res.status(200).json(ads); // Renvoie toutes les annonces
+    const ads = await CarAd.find()
+      .populate("sponsorship")
+      .sort({ [sortField]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalAds = await CarAd.countDocuments();
+
+    res.status(200).json({
+      totalAds,
+      totalPages: Math.ceil(totalAds / limit),
+      currentPage: page,
+      ads,
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération des annonces :", error);
     res
@@ -257,15 +274,10 @@ const updateCarAd = async (req, res) => {
       modele,
       annee,
       location,
+      photos,
       sponsorship,
     } = req.body;
     const { id } = req.params;
-
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).send("Please provide at least one photo");
-    }
-
-    const photos = req.files.map((file) => file.filename);
 
     // Check if a photo has been uploaded
     // const photo = req.file ? req.file.filename : null;
@@ -282,8 +294,10 @@ const updateCarAd = async (req, res) => {
       sponsorship,
     };
 
-    // Update the photo only if a new one is provided
-    if (photos) {
+    // Update the photo only if a new ones are provided
+    if (req.files || req.files.length > 0) {
+      updatedDetails.photos = req.files.map((file) => file.filename);
+    } else {
       updatedDetails.photos = photos;
     }
 

@@ -35,6 +35,8 @@ const carAdCacheSchema = new mongoose.Schema({
     type: Number,
   },
 
+  vitesse: Number,
+
   etat: {
     type: String,
     enum: ["neuf", "occasion"],
