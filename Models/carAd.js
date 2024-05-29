@@ -48,6 +48,12 @@ const carAdSchema = new mongoose.Schema({
     default: 0,
   },
 
+  vitesse: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+
   etat: {
     type: String,
     enum: ["neuf", "occasion"],
