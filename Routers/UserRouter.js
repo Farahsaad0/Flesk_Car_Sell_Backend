@@ -138,6 +138,8 @@ const updateUserData = async (req, res) => {
       Email: updatedUser.Email,
       Role: updatedUser.Role,
       Statut: updatedUser.Statut,
+      Numéro: updatedUser.Numéro,
+      Adresse: updatedUser.Adresse,
       photo: updatedUser.photo,
     });
   } catch (error) {
