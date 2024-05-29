@@ -115,7 +115,7 @@ const updateUserData = async (req, res) => {
         experience,
       });
     }
-    // Check if old password is correct
+    // Check if old password is correct 
     if (!(await bcrypt.compare(oldPassword, user.Password))) {
       return res.status(400).send("Old password is incorrect");
     }
