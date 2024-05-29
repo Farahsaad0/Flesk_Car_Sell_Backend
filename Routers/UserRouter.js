@@ -72,14 +72,14 @@ let getUserData = async (req, res) => {
       Nom: user.Nom,
       Prenom: user.Prenom,
       Email: user.Email,
-      Numéro: user.Numéro,
+      Numero: user.Numero,
       Adresse: user.Adresse,
       Role: user.Role,
       Statut: user.Statut,
       photo: user.photo,
       experience: user.ExpertId?.experience,
       prix: user.ExpertId?.prix,
-      spécialité: user.ExpertId?.spécialité,
+      specialite: user.ExpertId?.specialite,
     });
   } catch (error) {
     console.error(
@@ -97,7 +97,9 @@ const updateUserData = async (req, res) => {
     const userId = req.params.id;
 
     const user = await User.findById(userId);
-
+    console.log(req.body);
+    console.log(req.body);
+    console.log(req.body);
     if (!user) {
       return res.status(404).send("User not found");
     }
@@ -105,9 +107,13 @@ const updateUserData = async (req, res) => {
     const { oldPassword, newPassword, Role, ...userData } = req.body;
 
     if (user.Role === "Expert") {
-      const { spécialité, prix, experience } = req.body;
+      const { specialite, prix, experience } = req.body;
       // Only update expert-specific fields
-      await Expert.findByIdAndUpdate(user.ExpertId, { spécialité, prix, experience });
+      await Expert.findByIdAndUpdate(user.ExpertId, {
+        specialite,
+        prix,
+        experience,
+      });
     }
     // Check if old password is correct 
     if (!(await bcrypt.compare(oldPassword, user.Password))) {
@@ -138,9 +144,10 @@ const updateUserData = async (req, res) => {
       Email: updatedUser.Email,
       Role: updatedUser.Role,
       Statut: updatedUser.Statut,
-      Numéro: updatedUser.Numéro,
+      Numero: updatedUser.Numero,
       Adresse: updatedUser.Adresse,
       photo: updatedUser.photo,
+      specialite: updatedUser.ExpertId?.specialite,
     });
   } catch (error) {
     console.error("Error updating user data:", error);

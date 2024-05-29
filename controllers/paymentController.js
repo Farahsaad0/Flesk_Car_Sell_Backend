@@ -29,7 +29,7 @@ const payment = async (req, res) => {
   } else {
     console.log("first 3");
     sponsorship = await Sponsorship.findById(receivedData.sponsorship);
-    amount = sponsorship.price * 10;
+    amount = sponsorship.price * 1000;
     type = "sponsorship";
     redirectToOnSuccess = "https://8n7vlqww-3000.euw.devtunnels.ms/create-ad";
   }
