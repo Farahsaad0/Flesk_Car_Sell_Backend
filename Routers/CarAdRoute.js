@@ -438,7 +438,7 @@ const searchCarAdsByFeature = async (req, res) => {
     const matchingCarAds = CarAds.filter((carAd) => {
       return (
         carAd.sponsorship &&
-        carAd.sponsorship.redeemed === true &&
+        carAd.sponsorship.sponsorshipStatus === "active" &&
         carAd.sponsorship.features.includes(feature)
       );
     });

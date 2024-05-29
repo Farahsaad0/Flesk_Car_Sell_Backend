@@ -123,6 +123,7 @@ app.get("/getUser/:id", userController.getUserById);
 //* car routes
 //app.post("/carAds", carAdController.createCarAd);
 app.use("/images", express.static("public/uploads/"));
+app.use("/documents", express.static("public/uploads/"));
 // app.post("/carAds", upload.single("photo"), carAdController.createCarAd);
 app.post("/carAds", multi_upload, carAdController.createCarAd);
 
