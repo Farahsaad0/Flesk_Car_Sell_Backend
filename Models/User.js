@@ -28,8 +28,8 @@ const userSchema = new mongoose.Schema({
     default: "Utilisateur",
   },
 
-  Numéro: {
-    type: Number,
+  Numero: {
+    type: String,
     required: true,
     default: 0,
   },

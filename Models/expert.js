@@ -6,7 +6,7 @@ const expertSchema = new mongoose.Schema({
     default: false,
   },
 
-  spécialité: {
+  specialite: {
     type: String,
     required: true,
   },
