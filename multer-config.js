@@ -74,7 +74,7 @@ const multi_upload = multer({
     fileSize: 1024 * 1024 * 5,
     files: 10,
   },
-}).array("photos", 10);
+}).array("photos", 15);
 
 // Multiple file upload instance for job-related documents
 const job_multi_upload = multer({
