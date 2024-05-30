@@ -8,10 +8,10 @@ const Job = require("../Models/Job");
 // Mettre à jour la spécialité de l'expert
 let updateSpecialite = async (req, res) => {
   try {
-    const { spécialité } = req.body;
+    const { specialite } = req.body;
     const expert = await Expert.findByIdAndUpdate(
       req.params.id,
-      { spécialité },
+      { specialite },
       { new: true }
     );
     if (!expert) {
@@ -169,13 +169,13 @@ let rejeterExpert = async (req, res) => {
 let updateExpert = async (req, res) => {
   try {
     // Extraction des champs à mettre à jour à partir du corps de la requête
-    const { spécialité, bloqué, approuvé } = req.body;
+    const { specialite, bloqué, approuvé } = req.body;
 
     // Initialisation d'un objet pour stocker les champs à mettre à jour
     const updateFields = {};
 
     // Vérification de chaque champ et ajout à l'objet updateFields s'il est présent dans la requête
-    if (spécialité) updateFields.spécialité = spécialité;
+    if (specialite) updateFields.specialite = specialite;
     if (bloqué !== undefined) updateFields.bloqué = bloqué;
     if (approuvé !== undefined) updateFields.approuvé = approuvé;
 
@@ -242,7 +242,7 @@ const emailSender = async (email, subject, message) => {
 // Fonction pour envoyer une demande pour devenir expert
 const demandeExpertRole = async (req, res) => {
   try {
-    const { userId, spécialité, prix, experience } = req.body;
+    const { userId, specialite, prix, experience } = req.body;
 
     // Mettre à jour le rôle de l'utilisateur en "Expert"
     const user = await User.findByIdAndUpdate(
@@ -256,7 +256,7 @@ const demandeExpertRole = async (req, res) => {
 
     // Créer un nouveau document d'expert avec les informations supplémentaires
     const newExpert = new Expert({
-      spécialité: spécialité,
+      specialite: specialite,
       prix: prix,
       experience: experience,
     });

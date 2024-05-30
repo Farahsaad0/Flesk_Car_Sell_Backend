@@ -13,7 +13,7 @@ const register = async (req, res) => {
       Password,
       ConfirmPassword,
       Role,
-      Numéro,
+      Numero,
       Adresse,
       Spécialité,
       prix,
@@ -59,7 +59,7 @@ const register = async (req, res) => {
       Email,
       Password: hashedPassword,
       Role,
-      Numéro,
+      Numero,
       Adresse,
       Verified_code: verificationCode,
       Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé",
@@ -71,7 +71,7 @@ const register = async (req, res) => {
 
     if (Role.toLowerCase() === "expert") {
       const newExpert = new ExpertProfile({
-        spécialité: Spécialité,
+        specialite: Specialite,
         prix,
         experience,
       });
