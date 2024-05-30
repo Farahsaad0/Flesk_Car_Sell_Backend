@@ -40,6 +40,15 @@ const compileEmailNotificationTemplate = async () => {
   return handlebars.compile(templateHtml);
 };
 
+// Function to read and compile Handlebars notification template
+const compileGeneralNotificationTemplate = async () => {
+  const templateHtml = await fs.promises.readFile(
+    "./views/notification.handlebars",
+    "utf8"
+  );
+  return handlebars.compile(templateHtml);
+};
+
 // Fonction pour envoyer un e-mail
 const sendEmail = async (to, subject, variables) => {
   try {
@@ -53,6 +62,9 @@ const sendEmail = async (to, subject, variables) => {
       html = compileNotificationTemplate(variables);
     } else if (variables.type === "verification Code") {
       const compileVerificationCode = await compileEmailVerificationCode();
+      html = compileVerificationCode(variables);
+    } else if (variables.type === "general notification") {
+      const compileVerificationCode = await compileGeneralNotificationTemplate();
       html = compileVerificationCode(variables);
     } else {
       const compileTemplate = await compileEmailTemplate();
