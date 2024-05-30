@@ -330,7 +330,7 @@ let deleteCarAd = async (req, res) => {
     }
 
     console.log("Annonce supprimée avec succès :", ad);
-    res.status(200).json(ad);
+    res.status(200).json({ message: "Annonce supprimée avec succès :"});
   } catch (error) {
     console.error("Erreur lors de la suppression de l'annonce :", error);
     res

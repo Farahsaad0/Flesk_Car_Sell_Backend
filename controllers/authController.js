@@ -87,8 +87,9 @@ const register = async (req, res) => {
     console.log(variables.type + " << from authController.");
     await emailSender(newUser.Email, subject, variables);
 
-    res.status(201).json({ message: "User registered successfully.", user: newUser });
-
+    res
+      .status(201)
+      .json({ message: "User registered successfully.", user: newUser });
   } catch (error) {
     console.error("Erreur lors de la création de l'utilisateur :", error);
     res
@@ -117,7 +118,7 @@ let login = async (req, res) => {
     const token = jwt.sign(
       { userId: foundUser._id, email: foundUser.Email, role: foundUser.Role },
       process.env.JWT_PASS,
-      { expiresIn: "5m" }
+      { expiresIn: "10m" }
     );
 
     //* Generate Refresh Token
@@ -211,9 +212,9 @@ const setPassword = async (req, res) => {
           "Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre.",
       });
     }
-console.log(token)
-console.log(token)
-console.log(token)
+    console.log(token);
+    console.log(token);
+    console.log(token);
     // Decode the token to get the user ID
     const decodedToken = jwt.verify(token, process.env.JWT_RESET_PASS_TOKEN);
     const userId = decodedToken.userId;
@@ -263,5 +264,5 @@ module.exports = {
   login,
   register,
   resetPassword,
-  setPassword
+  setPassword,
 };

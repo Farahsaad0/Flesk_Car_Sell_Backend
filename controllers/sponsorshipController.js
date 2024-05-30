@@ -80,8 +80,8 @@ let deleteSponsorship = async (req, res) => {
     if (!deletedSponsorship) {
       return res.status(404).json({ error: "Sponsorship not found" });
     }
-    console.log("Aonnement supprimée avec succès :", deletedSponsorship);
-    res.status(200).json(deletedSponsorship);
+    console.log("Sponsorship pack supprimée avec succès :", deletedSponsorship);
+    res.status(200).json({ message: "Sponsorship pack supprimée avec succès." });
   } catch (error) {
     console.error("Error DELETEING sponsorship:", error);
     res.status(500).json({ error: "Failed to DELETE sponsorship" });

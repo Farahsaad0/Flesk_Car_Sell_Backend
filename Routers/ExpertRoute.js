@@ -6,28 +6,28 @@ const sendEmail = require("../utils/sendEmail");
 const Job = require("../Models/Job");
 
 // Mettre à jour la spécialité de l'expert
-let updateSpecialite = async (req, res) => {
-  try {
-    const { spécialité } = req.body;
-    const expert = await Expert.findByIdAndUpdate(
-      req.params.id,
-      { spécialité },
-      { new: true }
-    );
-    if (!expert) {
-      return res.status(404).json({ message: "Expert non trouvé." });
-    }
-    res.json(expert);
-  } catch (error) {
-    console.error(
-      "Erreur lors de la mise à jour de la spécialité de l'expert :",
-      error
-    );
-    res.status(500).json({
-      message: "Erreur lors de la mise à jour de la spécialité de l'expert.",
-    });
-  }
-};
+// let updateSpecialite = async (req, res) => {
+//   try {
+//     const { spécialité } = req.body;
+//     const expert = await Expert.findByIdAndUpdate(
+//       req.params.id,
+//       { spécialité },
+//       { new: true }
+//     );
+//     if (!expert) {
+//       return res.status(404).json({ message: "Expert non trouvé." });
+//     }
+//     res.json(expert);
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de la mise à jour de la spécialité de l'expert :",
+//       error
+//     );
+//     res.status(500).json({
+//       message: "Erreur lors de la mise à jour de la spécialité de l'expert.",
+//     });
+//   }
+// };
 
 // Récupérer tous les experts
 let getAllExperts = async (req, res) => {
@@ -106,7 +106,7 @@ let getApprovedExperts = async (req, res) => {
 
 let approuverExpert = async (req, res) => {
   const subject = "mise a jour de votre demand d'un compte expert";
-  const message = `Votre demand a etes accepter, Vous pouvez connecter est etuliser votre compte comme un expert`;
+  const message = `Votre demand a etes accepter, Vous pouvez connecter est utiliser votre compte comme un expert`;
 
   try {
     const expert = await Expert.findByIdAndUpdate(
@@ -125,7 +125,17 @@ let approuverExpert = async (req, res) => {
       { Statut: "Approuvé" }
     );
 
-    await emailSender(updatedExpert.Email, subject, message);
+    const variables = {
+      type: "general notification",
+      message: message,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+
+    await emailSender(updatedExpert.Email, subject, variables);
+    res.json({
+      message: "L'expert a été approuvé avec succès.",
+      expert: expert,
+    });
   } catch (error) {
     console.error("Erreur lors de l'approbation de l'expert :", error);
     res
@@ -156,7 +166,17 @@ let rejeterExpert = async (req, res) => {
       { Statut: "Rejeté" }
     );
 
-    await emailSender(updatedExpert.Email, subject, message);
+    const variables = {
+      type: "general notification",
+      message: message,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+
+    await emailSender(updatedExpert.Email, subject, variables);
+    res.json({
+      message: "L'expert a été rejeter avec succès.",
+      expert: expert,
+    });
   } catch (error) {
     console.error("Erreur lors de l'approbation de l'expert :", error);
     res
@@ -169,13 +189,13 @@ let rejeterExpert = async (req, res) => {
 let updateExpert = async (req, res) => {
   try {
     // Extraction des champs à mettre à jour à partir du corps de la requête
-    const { spécialité, bloqué, approuvé } = req.body;
+    const { specialite, bloqué, approuvé } = req.body;
 
     // Initialisation d'un objet pour stocker les champs à mettre à jour
     const updateFields = {};
 
     // Vérification de chaque champ et ajout à l'objet updateFields s'il est présent dans la requête
-    if (spécialité) updateFields.spécialité = spécialité;
+    if (specialite) updateFields.specialite = specialite;
     if (bloqué !== undefined) updateFields.bloqué = bloqué;
     if (approuvé !== undefined) updateFields.approuvé = approuvé;
 
@@ -222,13 +242,30 @@ let deleteExpert = async (req, res) => {
   }
 };
 
-const emailSender = async (email, subject, message) => {
+// const emailSender = async (email, subject, message) => {
+//   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+//   // const subject = "Code de vérification pour votre inscription";
+//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+
+//   try {
+//     await sendEmail(email, subject, message);
+//     console.log("E-mail de notification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de notification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
+//   }
+// };
+
+const emailSender = async (email, subject, variables) => {
   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
   // const subject = "Code de vérification pour votre inscription";
   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
   try {
-    await sendEmail(email, subject, message);
+    await sendEmail(email, subject, variables);
     console.log("E-mail de notification envoyé avec succès");
   } catch (error) {
     console.error(
@@ -242,7 +279,7 @@ const emailSender = async (email, subject, message) => {
 // Fonction pour envoyer une demande pour devenir expert
 const demandeExpertRole = async (req, res) => {
   try {
-    const { userId, spécialité, prix, experience } = req.body;
+    const { userId, specialite, prix, experience } = req.body;
 
     // Mettre à jour le rôle de l'utilisateur en "Expert"
     const user = await User.findByIdAndUpdate(
@@ -256,7 +293,7 @@ const demandeExpertRole = async (req, res) => {
 
     // Créer un nouveau document d'expert avec les informations supplémentaires
     const newExpert = new Expert({
-      spécialité: spécialité,
+      specialite: specialite,
       prix: prix,
       experience: experience,
     });
@@ -302,7 +339,7 @@ const getJobsCountByExpert = async (req, res) => {
 };
 
 module.exports = {
-  updateSpecialite,
+  // updateSpecialite,
   getAllExperts,
   // bloquerExpert,
   approuverExpert,

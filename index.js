@@ -12,7 +12,6 @@ const verifyJWT = require("./middleware/verifyJWT");
 const socketIo = require("socket.io");
 const http = require("http");
 const Job = require("./Models/Job");
-// const cv = require("./opencv/opencv");
 
 // Import controllers
 const userController = require("./Routers/UserRouter");
@@ -111,24 +110,22 @@ app.post("/verify", userController.verifyRouteHandler);
 app.get("/logout", logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);
 
-app.get("/getUserData/:id", userController.getUserData);
-//app.put("/updateUserData/:id", verifyJWT, upload.single("photo"), userController.updateUserData);
-app.put("/updateUserData/:id", single_upload, userController.updateUserData);
-//* route contact
-app.post("/contact", contactController.contact);
+//* file routes:
+app.use("/images", express.static("public/uploads/"));
+app.use("/documents", express.static("public/uploads/"));
 
+//* user related routes:
+app.get("/getUserData/:id", userController.getUserData);
+app.put("/updateUserData/:id", single_upload, userController.updateUserData);
 app.get("/getAllUsers", verifyJWT, userController.getAllUsers);
 app.get("/getUser/:id", userController.getUserById);
 
-//* car routes
-//app.post("/carAds", carAdController.createCarAd);
-app.use("/images", express.static("public/uploads/"));
-app.use("/documents", express.static("public/uploads/"));
-// app.post("/carAds", upload.single("photo"), carAdController.createCarAd);
+//* contact routes:
+// app.post("/contact", contactController.contact);
+
+//* car routes:
 app.post("/carAds", multi_upload, carAdController.createCarAd);
-
 app.get("/getCarAdByUserId/:userId", carAdController.getCarAdByUserId);
-
 app.get("/carAds", carAdController.getAllCarAds);
 // app.delete("/delete_unused_photos", carAdController.delete_unused_photos);
 app.put("/carAd/update/:id", multi_upload, carAdController.updateCarAd);
@@ -137,11 +134,7 @@ app.get("/carAds/search", carAdController.searchCarAds);
 app.get("/carAds/sponsored", carAdController.searchCarAdsByFeature);
 app.get("/carAds/details/:id", carAdController.getCarAdById); //importantttttt
 
-app.put("/:id/specialite", expertController.updateSpecialite);
-// app.get("/experts", expertController.getAllExperts);
-// app.put("/:id/bloquer", expertController.bloquerExpert);
-
-//* carAdCache routes
+//* carAdCache routes:
 app.post(
   "/carAdCache",
   verifyJWT,
@@ -150,12 +143,13 @@ app.post(
 );
 app.get("/carAdCache/:userId", carAdCacheController.getCarAdCache);
 
+//* transaction routes:
 app.get(
   "/sponsorships/available/:userId",
   transactionController.getInactivatedSponsorships
 );
 
-//* Sponsorship routes
+//* Sponsorship routes:
 app.post("/sponsorship", verifyJWT, sponsorshipController.createSponsorship);
 app.get("/sponsorships", sponsorshipController.getAllSponsorships);
 app.get("/sponsorship/:id", sponsorshipController.getOneSponsorship);
@@ -166,7 +160,7 @@ app.delete(
   sponsorshipController.deleteSponsorship
 );
 
-//* Experts routes
+//* Experts routes:
 app.get("/experts", expertController.getApprovedExperts);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
@@ -174,7 +168,7 @@ app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.post("/demandeExpert", expertController.demandeExpertRole);
 app.get("/nbExpertisme/:id", expertController.getJobsCountByExpert);
 
-//* Job routes
+//* Job routes:
 app.post("/createJob", jobController.createJob);
 app.get("/job/:id", jobController.getJobById);
 app.post("/job/:id/upload", job_multi_upload, jobController.uploadDocuments);
@@ -192,7 +186,7 @@ app.get(
   jobController.getAssignedExpertIdsForCarAndClient
 );
 
-//* admin routes
+//* admin routes:
 // app.post("/adminLogin", adminController.adminLogin);
 app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
 app.put("/users/:id/block", verifyJWT, userController.blockUser);
@@ -204,6 +198,8 @@ app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 //* payment routes
 app.post("/init-payment", paymentController.payment);
 app.get("/konnect/webhook", paymentController.payment_update);
+
+//* vvv #####################_server related functions_##################### vvv
 
 app.get("/", (req, res) => {
   res.send("Server is running");
