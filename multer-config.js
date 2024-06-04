@@ -77,7 +77,7 @@ const multi_upload = multer({
 }).array("photos", 15);
 
 // Multiple file upload instance for job-related documents
-const job_multi_upload = multer({
+const file_multi_upload = multer({
   storage,
   fileFilter: jobFilesFilter,
   limits: {
@@ -89,5 +89,5 @@ const job_multi_upload = multer({
 module.exports = {
   single_upload,
   multi_upload,
-  job_multi_upload,
+  file_multi_upload,
 };

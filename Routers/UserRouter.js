@@ -1,24 +1,24 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../Models/User");
-const sendEmail = require("../utils/sendEmail");
+const emailSender = require("../utils/sendEmail");
 const uuid = require("uuid");
 const Expert = require("../Models/expert");
 
 // Fonction pour envoyer un e-mail de vérification
-const emailSender = async (email, subject, message) => {
-  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
-  try {
-    await sendEmail(email, subject, message);
-    console.log("E-mail de vérification envoyé avec succès");
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'envoi de l'e-mail de vérification :",
-      error
-    );
-    throw new Error("Erreur lors de l'envoi de l'e-mail de vérification");
-  }
-};
+// const emailSender = async (email, subject, message) => {
+//   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+//   try {
+//     await sendEmail(email, subject, message);
+//     console.log("E-mail de vérification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de vérification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de vérification");
+//   }
+// };
 
 // Route pour valider le code de vérification et finaliser l'inscription
 let verifyRouteHandler = async (req, res) => {
@@ -115,7 +115,7 @@ const updateUserData = async (req, res) => {
         experience,
       });
     }
-    // Check if old password is correct 
+    // Check if old password is correct
     if (!(await bcrypt.compare(oldPassword, user.Password))) {
       return res.status(400).send("Old password is incorrect");
     }
@@ -163,6 +163,7 @@ const getAllUsers = async (req, res) => {
     const sortField = req.query.sortField || "JoinDate";
     const sortOrder = parseInt(req.query.sortOrder) || -1;
     const filter = req.query.filter || "all";
+    const Role = req.query.role || "all";
 
     const query = {};
     if (search) {
@@ -174,6 +175,9 @@ const getAllUsers = async (req, res) => {
     }
     if (filter !== "all") {
       query.Statut = filter; // Filter by status
+    }
+    if (Role !== "all") {
+      query.Role = Role; // Filter by Role
     }
 
     const totalUsers = await User.countDocuments(query);
@@ -260,8 +264,13 @@ let blockUser = async (req, res) => {
 
     // user.Statut = "Bloqué";
 
-    // await user.save();
-    await emailSender(user.Email, subject, message);
+    const variables = {
+      type: "general notification",
+      message: message,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+
+    await emailSender(user.Email, subject, variables);
 
     res.status(200).json({ message: "Utilisateur bloqué avec succès." });
   } catch (error) {
@@ -273,6 +282,17 @@ let blockUser = async (req, res) => {
 };
 
 let unblockUser = async (req, res) => {
+  const subject = "Mise à jour de votre compte";
+  const message = `Cher(e) utilisateur(trice),
+
+Nous avons le plaisir de vous informer que votre compte utilisateur a été réactivé. Cette décision fait suite à la résolution des problèmes de sécurité ou de non-conformité avec nos conditions d'utilisation.
+    
+Nous vous remercions de votre compréhension et de votre patience.
+    
+Si vous avez des questions ou besoin d'assistance supplémentaire, n'hésitez pas à nous contacter.
+    
+Cordialement,`;
+
   try {
     const userId = req.params.id;
 
@@ -285,6 +305,14 @@ let unblockUser = async (req, res) => {
     user.Statut = "Approuvé";
 
     await user.save();
+
+    const variables = {
+      type: "general notification",
+      message: message,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+
+    await emailSender(user.Email, subject, variables);
 
     res.status(200).json({ message: "User unblocked successfully." });
   } catch (error) {

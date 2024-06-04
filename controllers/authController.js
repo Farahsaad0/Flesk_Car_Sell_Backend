@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../Models/User");
-const sendEmail = require("../utils/sendEmail");
+const emailSender = require("../utils/sendEmail");
 const ExpertProfile = require("../Models/expert");
 
 const register = async (req, res) => {
@@ -13,12 +13,18 @@ const register = async (req, res) => {
       Password,
       ConfirmPassword,
       Role,
-      Numéro,
+      Numero,
       Adresse,
-      Spécialité,
+      Specialite,
       prix,
       experience,
     } = req.body;
+
+    // Validate email address
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(Email)) {
+      return res.status(400).json({ message: "Invalid email address" });
+    }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ Email });
@@ -58,27 +64,35 @@ const register = async (req, res) => {
       Prenom,
       Email,
       Password: hashedPassword,
-      Role,
-      Numéro,
+      Role: Role || "Utilisateur",
+      Numero,
       Adresse,
       Verified_code: verificationCode,
       Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé",
     });
 
-    await newUser.save();
-
     const subject = "Code de vérification pour votre inscription";
 
     if (Role.toLowerCase() === "expert") {
+      if (!req.files) {
+        res
+          .status(400)
+          .json({ message: "la document de confiance est obligatoire" });
+      }
+
+      const documentDeConfiance = req.files.map((file) => file.filename);
       const newExpert = new ExpertProfile({
-        spécialité: Spécialité,
+        specialite: Specialite,
         prix,
         experience,
+        documentDeConfiance,
       });
+
       await newExpert.save();
       newUser.ExpertId = newExpert._id;
-      await newUser.save();
     }
+
+    await newUser.save();
     const variables = {
       type: "verification Code",
       code_de_verification: verificationCode,
@@ -113,7 +127,10 @@ let login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
-
+    if (foundUser.Status === "Bloqué") {
+      console.log(`Blocked login attempt for user: ${username}`);
+      return res.status(403).json({ message: "Invalid username or password" });
+    }
     //* Generate JWT token
     const token = jwt.sign(
       { userId: foundUser._id, email: foundUser.Email, role: foundUser.Role },
@@ -243,22 +260,22 @@ const setPassword = async (req, res) => {
   }
 };
 
-const emailSender = async (email, subject, variables) => {
-  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
-  // const subject = "Code de vérification pour votre inscription";
-  // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+// const emailSender = async (email, subject, variables) => {
+//   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+//   // const subject = "Code de vérification pour votre inscription";
+//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
-  try {
-    await sendEmail(email, subject, variables);
-    console.log("E-mail de notification envoyé avec succès");
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'envoi de l'e-mail de notification :",
-      error
-    );
-    throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
-  }
-};
+//   try {
+//     await sendEmail(email, subject, variables);
+//     console.log("E-mail de notification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de notification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
+//   }
+// };
 
 module.exports = {
   login,

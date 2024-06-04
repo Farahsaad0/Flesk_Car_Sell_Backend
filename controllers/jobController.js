@@ -2,7 +2,7 @@ const { response } = require("express");
 const Job = require("../Models/Job");
 const User = require("../Models/User");
 const Expert = require("../Models/expert");
-const sendEmail = require("../utils/sendEmail");
+const emailSender = require("../utils/sendEmail");
 const { payment } = require("./paymentController");
 
 const createJob = async (req, res) => {
@@ -115,7 +115,6 @@ const getJobsByClientId = async (req, res) => {
 };
 
 const acceptJob = async (req, res) => {
-  const subject = "mise a jour de votre demand d'expertism";
 
   try {
     const jobId = req.params.jobId;
@@ -171,7 +170,7 @@ const acceptJob = async (req, res) => {
       paymentLink: paymentResponse.payUrl,
     };
 
-    const subject = "mise a jour de votre demand d'expertism";
+    const subject = "Mise à jour de votre demande d'expertise";
 
     await emailSender(clientEmail, subject, variables);
 
@@ -202,8 +201,14 @@ const rejectJob = async (req, res) => {
 
     job.accepted = "rejected";
     await job.save();
+    
+    const variables = {
+      type: "general notification",
+      message: message,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
 
-    await emailSender(clientEmail, subject, message);
+    await emailSender(clientEmail, subject, variables);
 
     res.status(200).json({ success: true, data: job });
   } catch (error) {
@@ -333,22 +338,22 @@ const fetchAllDocuments = async (req, res) => {
   }
 };
 
-const emailSender = async (email, subject, variables) => {
-  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
-  // const subject = "Code de vérification pour votre inscription";
-  // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+// const emailSender = async (email, subject, variables) => {
+//   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+//   // const subject = "Code de vérification pour votre inscription";
+//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
-  try {
-    await sendEmail(email, subject, variables);
-    console.log("E-mail de notification envoyé avec succès");
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'envoi de l'e-mail de notification :",
-      error
-    );
-    throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
-  }
-};
+//   try {
+//     await sendEmail(email, subject, variables);
+//     console.log("E-mail de notification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de notification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
+//   }
+// };
 
 module.exports = {
   createJob,

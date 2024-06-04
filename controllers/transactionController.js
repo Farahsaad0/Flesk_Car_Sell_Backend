@@ -1,5 +1,6 @@
 const express = require("express");
 const Transaction = require("../Models/transaction");
+const emailSender = require("../utils/sendEmail");
 
 // Read route
 const getInactivatedSponsorships = async (req, res) => {
@@ -21,18 +22,157 @@ const getInactivatedSponsorships = async (req, res) => {
   }
 };
 
+const getMonthName = (monthIndex) => {
+  const months = [
+    "Jan",
+    "Feb",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  return months[monthIndex];
+};
+
+const getTransactions = async (req, res) => {
+  try {
+    const transactions = await Transaction.find({
+      paymentStatus: "completed",
+    });
+    const aggregatedData = {};
+
+    transactions.forEach((transaction) => {
+      const monthIndex = new Date(transaction.createdAt).getMonth();
+      const monthName = getMonthName(monthIndex);
+
+      if (!aggregatedData[monthName]) {
+        aggregatedData[monthName] = {
+          sponsorship: 0,
+          expertConsultation: 0,
+        };
+      }
+
+      if (transaction.type === "sponsorship") {
+        aggregatedData[monthName].sponsorship += transaction.amount;
+      } else if (transaction.type === "expert consultation") {
+        aggregatedData[monthName].expertConsultation += transaction.amount;
+      }
+    });
+
+    const categories = Object.keys(aggregatedData);
+    const series = [
+      {
+        name: "Sponsorship",
+        data: categories.map((month) => aggregatedData[month].sponsorship),
+      },
+      {
+        name: "Expert Consultation",
+        data: categories.map(
+          (month) => aggregatedData[month].expertConsultation
+        ),
+      },
+    ];
+
+    res.json({ categories, series });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+const getExpertCompletedTransactions = async (req, res) => {
+  
+  const sortField = req.query.sortField || "paymentDate";
+  const sortOrder = parseInt(req.query.sortOrder) || -1;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const expertId = req.params.id;
+  try {
+    const transactions = await Transaction.find({
+      recipient: expertId,
+      paymentStatus: "completed",
+    })
+      .populate({
+        path: "job",
+        select: "accepted",
+        match: { accepted: "completed" },
+      })
+      .populate("sender", ["Nom", "Prenom"])
+      .sort({ [sortField]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit);;
+
+    const completedTransactions = transactions.filter(
+      (transaction) => transaction.job
+    );
+
+    res.status(200).json(completedTransactions);
+  } catch (error) {
+    console.error("Error fetching completed transactions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getClientCompletedTransactions = async (req, res) => {
+  const clientId = req.params.id;
+  try {
+    const transactions = await Transaction.find({
+      sender: clientId,
+      paymentStatus: "completed",
+    }).populate("recipient", ["Nom", "Prenom", "Role"]);
+
+    // const completedTransactions = transactions.filter(
+    //   (transaction) => transaction.job
+    // );
+
+    res.status(200).json(transactions);
+  } catch (error) {
+    console.error("Error fetching completed transactions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 // Function to check and update sponsorship status
 const checkAndUpdateSponsorshipStatus = async () => {
+  const subject = "Mise à jour de votre annonce sponsoriser";
   try {
     const currentDate = new Date();
-
+    console.log("checked sponsorship status");
     const transactions = await Transaction.find({
       sponsorshipStatus: "active",
       expirationDate: { $lt: currentDate },
-    });
+    }).populate("sender", ["Email"]);
 
     for (const transaction of transactions) {
       await updateSponsorshipStatus(transaction._id, "expired");
+      console.log("expired a sponsored announcement");
+
+      const message = `
+Bonjour,
+      
+Votre sponsorship de type : ${transaction.sponsorship} a expiré le ${new Date(
+        transaction.expirationDate
+      ).toLocaleDateString()}.
+      
+Pour renouveler votre sponsorship ou obtenir plus d'informations, veuillez visiter notre site web ou nous contacter.
+      
+Cordialement,
+L'équipe de Support
+      `;
+
+      const variables = {
+        type: "general notification",
+        message: message,
+        Date: new Date(Date.now()).toLocaleDateString(),
+      };
+
+      await emailSender(transaction.sender.Email, subject, variables);
     }
   } catch (error) {
     console.error("Error checking and updating sponsorship status:", error);
@@ -51,7 +191,11 @@ const updateSponsorshipStatus = async (transactionId, status) => {
   }
 };
 
-// Schedule expiration check to run periodically
-setInterval(checkAndUpdateSponsorshipStatus, 86400000);
+setInterval(checkAndUpdateSponsorshipStatus, 1000 * 60 * 60);
 
-module.exports = { getInactivatedSponsorships };
+module.exports = {
+  getInactivatedSponsorships,
+  getExpertCompletedTransactions,
+  getClientCompletedTransactions,
+  getTransactions,
+};

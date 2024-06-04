@@ -21,6 +21,7 @@ const expertSchema = new mongoose.Schema({
     required: true,
   },
 
+  documentDeConfiance: [String],
 });
 
 const Expert = mongoose.model("ExpertProfile", expertSchema);

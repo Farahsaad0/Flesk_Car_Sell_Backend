@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Expert = require("../Models/expert");
 const User = require("../Models/User");
-const sendEmail = require("../utils/sendEmail");
+const emailSender = require("../utils/sendEmail");
 const Job = require("../Models/Job");
 
 // Mettre à jour la spécialité de l'expert
@@ -54,6 +54,7 @@ let getApprovedExperts = async (req, res) => {
       Role: "Expert",
       Statut: "Approuvé",
     })
+      .select("-Password -Verified_code")
       .populate("ExpertId") // Populate the ExpertId field to fetch related data from the expert collection
       .skip((page - 1) * perPage)
       .limit(perPage);
@@ -259,22 +260,22 @@ let deleteExpert = async (req, res) => {
 //   }
 // };
 
-const emailSender = async (email, subject, variables) => {
-  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
-  // const subject = "Code de vérification pour votre inscription";
-  // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+// const emailSender = async (email, subject, variables) => {
+//   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+//   // const subject = "Code de vérification pour votre inscription";
+//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
-  try {
-    await sendEmail(email, subject, variables);
-    console.log("E-mail de notification envoyé avec succès");
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'envoi de l'e-mail de notification :",
-      error
-    );
-    throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
-  }
-};
+//   try {
+//     await sendEmail(email, subject, variables);
+//     console.log("E-mail de notification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de notification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
+//   }
+// };
 
 // Fonction pour envoyer une demande pour devenir expert
 const demandeExpertRole = async (req, res) => {
@@ -290,12 +291,23 @@ const demandeExpertRole = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Utilisateur non trouvé." });
     }
-
+    if (!req.files) {
+      res
+        .status(400)
+        .json({ message: "la document de confiance est obligatoire" });
+    }
+console.log(req.files)
+console.log(req.files)
+console.log(req.files)
+console.log(req.files)
+console.log(req.files)
+    const documentDeConfiance = req.files.map(file => file.filename);
     // Créer un nouveau document d'expert avec les informations supplémentaires
     const newExpert = new Expert({
       specialite: specialite,
       prix: prix,
       experience: experience,
+      documentDeConfiance,
     });
 
     // Enregistrer le document d'expert dans la base de données

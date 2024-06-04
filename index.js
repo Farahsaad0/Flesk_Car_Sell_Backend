@@ -4,7 +4,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const {
-  job_multi_upload,
+  file_multi_upload,
   single_upload,
   multi_upload,
 } = require("./multer-config");
@@ -12,6 +12,7 @@ const verifyJWT = require("./middleware/verifyJWT");
 const socketIo = require("socket.io");
 const http = require("http");
 const Job = require("./Models/Job");
+const rateLimiter = require("express-rate-limit");
 
 // Import controllers
 const userController = require("./Routers/UserRouter");
@@ -51,7 +52,17 @@ app.use(
   })
 );
 // app.use(cors());
-app.use(cookieParser());
+app.use(cookieParser()); 
+
+// Rate limiting middleware
+const loginLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login requests per windowMs
+  message: {
+    message:
+      "Too many login attempts from this IP, please try again after 15 minutes",
+  },
+});
 
 const server = http.createServer(app);
 server.listen(8001, () => {
@@ -102,8 +113,8 @@ const logRequest = (req, res, next) => {
 app.use(logRequest);
 
 //* authentication routes
-app.post("/login", authController.login);
-app.post("/register", authController.register);
+app.post("/login", loginLimiter, authController.login);
+app.post("/register", file_multi_upload, authController.register);
 app.post("/resetPassword", authController.resetPassword);
 app.put("/changePassword/:token", authController.setPassword);
 app.post("/verify", userController.verifyRouteHandler);
@@ -131,7 +142,7 @@ app.get("/carAds", carAdController.getAllCarAds);
 app.put("/carAd/update/:id", multi_upload, carAdController.updateCarAd);
 app.delete("/carAds/:id", verifyJWT, carAdController.deleteCarAd);
 app.get("/carAds/search", carAdController.searchCarAds);
-app.get("/carAds/sponsored", carAdController.searchCarAdsByFeature);
+app.get("/carAds/sponsored", carAdController.getCarAdsByFeature);
 app.get("/carAds/details/:id", carAdController.getCarAdById); //importantttttt
 
 //* carAdCache routes:
@@ -148,6 +159,15 @@ app.get(
   "/sponsorships/available/:userId",
   transactionController.getInactivatedSponsorships
 );
+app.get(
+  "/transactions/expert/:id",
+  transactionController.getExpertCompletedTransactions
+);
+app.get(
+  "/transactions/:id",
+  transactionController.getClientCompletedTransactions
+);
+app.get("/transactions/", transactionController.getTransactions);
 
 //* Sponsorship routes:
 app.post("/sponsorship", verifyJWT, sponsorshipController.createSponsorship);
@@ -165,13 +185,17 @@ app.get("/experts", expertController.getApprovedExperts);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
 app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
-app.post("/demandeExpert", expertController.demandeExpertRole);
+app.post(
+  "/demandeExpert",
+  file_multi_upload,
+  expertController.demandeExpertRole
+);
 app.get("/nbExpertisme/:id", expertController.getJobsCountByExpert);
 
 //* Job routes:
 app.post("/createJob", jobController.createJob);
 app.get("/job/:id", jobController.getJobById);
-app.post("/job/:id/upload", job_multi_upload, jobController.uploadDocuments);
+app.post("/job/:id/upload", file_multi_upload, jobController.uploadDocuments);
 app.delete("/job/:id/files/:fileName", jobController.deleteDocument);
 app.get("/job/files", jobController.fetchAllDocuments);
 // app.post("/job/:id/chat", jobController.sendMessage); // depricated

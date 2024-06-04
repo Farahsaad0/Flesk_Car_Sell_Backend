@@ -275,10 +275,10 @@ const updateCarAd = async (req, res) => {
       annee,
       location,
       photos,
-      sponsorship,
     } = req.body;
     const { id } = req.params;
-
+    console.log(req.body);
+    console.log(photos);
     // Check if a photo has been uploaded
     // const photo = req.file ? req.file.filename : null;
 
@@ -291,16 +291,18 @@ const updateCarAd = async (req, res) => {
       modele,
       annee,
       location,
-      sponsorship,
+      photos,
     };
 
     // Update the photo only if a new ones are provided
-    if (req.files || req.files.length > 0) {
+    if (req.files && req.files.length > 0) {
+      console.log("_______________1_______________");
       updatedDetails.photos = req.files.map((file) => file.filename);
     } else {
+      console.log("_______________2_______________");
       updatedDetails.photos = photos;
     }
-
+    console.log(updatedDetails);
     // Find and update the car ad in the database
     const ad = await CarAd.findByIdAndUpdate(id, updatedDetails, { new: true });
 
@@ -330,7 +332,7 @@ let deleteCarAd = async (req, res) => {
     }
 
     console.log("Annonce supprimée avec succès :", ad);
-    res.status(200).json({ message: "Annonce supprimée avec succès :"});
+    res.status(200).json({ message: "Annonce supprimée avec succès :" });
   } catch (error) {
     console.error("Erreur lors de la suppression de l'annonce :", error);
     res
@@ -344,12 +346,9 @@ let getCarAdById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const ad = await CarAd.findById(id).populate("utilisateur", [
-      "Nom",
-      "Prenom",
-      "Numéro",
-      "photo",
-    ]);
+    const ad = await CarAd.findById(id)
+      .populate("utilisateur", ["Nom", "Prenom", "Numéro", "photo"])
+      .populate("sponsorship");
     if (!ad) {
       return res.status(404).json({ error: "Annonce non trouvée" });
     }
@@ -383,20 +382,82 @@ let getCarAdByUserId = async (req, res) => {
 };
 
 // rechercher des annonces de voiture en fonction de certains critères
-let searchCarAds = async (req, res) => {
+// let searchCarAds = async (req, res) => {
+//   try {
+//     const { marque, modele, anneeFrom, anneeTo, prixFrom, prixTo, adresse } =
+//       req.query;
+//     let query = {};
+
+//     // Filtrer par marque
+//     if (marque) {
+//       query.marque = marque;
+//     }
+
+//     // Filtrer par modèle
+//     if (modele) {
+//       query.modele = modele;
+//     }
+
+//     // Filtrer par année (intervalle)
+//     if (anneeFrom && anneeTo) {
+//       query.annee = { $gte: anneeFrom, $lte: anneeTo };
+//     } else if (anneeFrom) {
+//       query.annee = { $gte: anneeFrom };
+//     } else if (anneeTo) {
+//       query.annee = { $lte: anneeTo };
+//     }
+
+//     // Filtrer par prix (intervalle)
+//     if (prixFrom && prixTo) {
+//       query.prix = { $gte: prixFrom, $lte: prixTo };
+//     } else if (prixFrom) {
+//       query.prix = { $gte: prixFrom };
+//     } else if (prixTo) {
+//       query.prix = { $lte: prixTo };
+//     }
+
+//     // Filtrer par adresse
+//     if (adresse) {
+//       query.adresse = adresse;
+//     }
+//     console.log(query);
+//     // Recherche des annonces de voiture en fonction des critères spécifiés
+//     const ads = await CarAd.find(query).populate("sponsorship");
+//     res.status(200).json(ads); // Renvoie les annonces correspondantes
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de la recherche des annonces de voiture :",
+//       error
+//     );
+//     res.status(500).json({
+//       error: "Erreur lors de la recherche des annonces de voiture " + error,
+//     });
+//   }
+// };
+
+const searchCarAds = async (req, res) => {
   try {
-    const { marque, modele, anneeFrom, anneeTo, prixFrom, prixTo, adresse } =
-      req.query;
+    const {
+      marque,
+      modele,
+      anneeFrom,
+      anneeTo,
+      prixFrom,
+      prixTo,
+      adresse,
+      page = 1,
+      limit = 10,
+    } = req.query;
     let query = {};
 
     // Filtrer par marque
     if (marque) {
-      query.marque = marque;
+      query.marque = new RegExp(marque, "i");
     }
 
-    // Filtrer par modèle
+    // Filtrer par modèle (insensible à la casse)
     if (modele) {
-      query.modele = modele;
+      query.modele = new RegExp(modele, "i");
     }
 
     // Filtrer par année (intervalle)
@@ -419,12 +480,48 @@ let searchCarAds = async (req, res) => {
 
     // Filtrer par adresse
     if (adresse) {
-      query.adresse = adresse;
+      query.adresse = new RegExp(adresse, "i");
     }
+
     console.log(query);
+
+    // Calculate the skip value
+    const skip = (page - 1) * limit;
+
     // Recherche des annonces de voiture en fonction des critères spécifiés
-    const ads = await CarAd.find(query).populate("sponsorship");
-    res.status(200).json(ads); // Renvoie les annonces correspondantes
+    const ads = await CarAd.find(query)
+      .populate("sponsorship")
+      .sort({ ["date"]: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Séparation et tri des annonces par statut de parrainage
+    const sponsoredAds = ads.filter(
+      (ad) =>
+        ad.sponsorship &&
+        ad.sponsorship.sponsorshipStatus === "active" &&
+        ad.sponsorship.features.includes(
+          "Mis en avant dans les résultats de recherche"
+        )
+    );
+    const nonSponsoredAds = ads.filter(
+      (ad) =>
+        !ad.sponsorship ||
+        ad.sponsorship.sponsorshipStatus !== "active" ||
+        !ad.sponsorship.features.includes(
+          "Mis en avant dans les résultats de recherche"
+        )
+    );
+
+    // Combinaison des listes avec les annonces sponsorisées en premier
+    const sortedAds = [...sponsoredAds, ...nonSponsoredAds];
+
+    res.status(200).json({
+      total: ads.length,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      data: sortedAds,
+    }); // Renvoie les annonces triées
   } catch (error) {
     console.error(
       "Erreur lors de la recherche des annonces de voiture :",
@@ -437,7 +534,7 @@ let searchCarAds = async (req, res) => {
 };
 
 // Route to search and return CarAds by the specified feature in their sponsorship
-const searchCarAdsByFeature = async (req, res) => {
+const getCarAdsByFeature = async (req, res) => {
   try {
     // Extract the feature from the query parameters
     const { feature } = req.query;
@@ -453,7 +550,8 @@ const searchCarAdsByFeature = async (req, res) => {
       return (
         carAd.sponsorship &&
         carAd.sponsorship.sponsorshipStatus === "active" &&
-        carAd.sponsorship.features.includes(feature)
+        carAd.sponsorship.features.includes(feature) &&
+        carAd.sponsorship.expirationDate > Date.now()
       );
     });
 
@@ -506,6 +604,6 @@ module.exports = {
   getCarAdById,
   searchCarAds,
   getCarAdByUserId,
-  searchCarAdsByFeature,
+  getCarAdsByFeature,
   // delete_unused_photos,
 };

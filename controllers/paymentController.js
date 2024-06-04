@@ -2,8 +2,10 @@ const axios = require("axios");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const Transaction = require("../Models/transaction");
-const sendEmail = require("../utils/sendEmail");
+const emailSender = require("../utils/sendEmail");
 const Sponsorship = require("../Models/sponsorship");
+const Job = require("../Models/Job");
+const CarAd = require("../Models/carAd");
 
 const payment = async (req, res) => {
   let receivedData = req.body;
@@ -12,6 +14,7 @@ const payment = async (req, res) => {
     type,
     job = null,
     sponsorship,
+    c_orderId = false,
     redirectToOnSuccess;
 
   if (receivedData.type === "expert consultation") {
@@ -26,8 +29,15 @@ const payment = async (req, res) => {
     amount = receivedData.amount;
     recipient = receivedData.sellerId;
     type = receivedData.type;
-  } else {
+  } else if (receivedData.type === "sponsorship alt") {
     console.log("first 3");
+    sponsorship = await Sponsorship.findById(receivedData.sponsorship);
+    amount = sponsorship.price * 1000;
+    type = "sponsorship";
+    c_orderId = true;
+    redirectToOnSuccess = `https://8n7vlqww-3000.euw.devtunnels.ms/edit-car/${receivedData.carAd}`;
+  } else {
+    console.log("first 4");
     sponsorship = await Sponsorship.findById(receivedData.sponsorship);
     amount = sponsorship.price * 1000;
     type = "sponsorship";
@@ -50,7 +60,7 @@ const payment = async (req, res) => {
       " | redirection link : " +
       redirectToOnSuccess
   );
-  let sender = receivedData.userId;
+  const sender = receivedData.userId;
   console.log("second");
   const paymentData = {
     receiverWalletId: process.env.RECEIVER_WALLET_ID,
@@ -62,13 +72,15 @@ const payment = async (req, res) => {
     lifespan: 10,
     checkoutForm: false,
     addPaymentFeesToAmount: false,
-    orderId: "1234657",
     webhook: "https://8n7vlqww-8000.euw.devtunnels.ms/konnect/webhook",
     silentWebhook: true,
     successUrl: redirectToOnSuccess,
     failUrl: "https://dev.konnect.network/gateway/payment-failure",
     theme: "light",
   };
+  if (c_orderId) {
+    paymentData.orderId = "1";
+  }
   console.log("third");
   try {
     const config = {
@@ -94,6 +106,11 @@ const payment = async (req, res) => {
     };
     console.log("sixth");
 
+    if (receivedData.type === "sponsorship alt") {
+      const durationInMilliseconds = sponsorship.duration * 24 * 60 * 60 * 1000;
+      const expirationDate = new Date(Date.now() + durationInMilliseconds);
+      transactionData.expirationDate = expirationDate;
+    }
     if (sponsorship) {
       transactionData.sponsorship = sponsorship.type;
       transactionData.features = sponsorship.features;
@@ -106,6 +123,15 @@ const payment = async (req, res) => {
       transactionData.expertGotPaid = false;
     }
     const transaction = new Transaction(transactionData);
+    if (receivedData.type === "sponsorship alt") {
+      try {
+        await CarAd.findByIdAndUpdate(receivedData.carAd, {
+          sponsorship: transaction._id,
+        });
+      } catch (error) {
+        res.json({ message: "error linking the carAd with the transaction" });
+      }
+    }
     await transaction.save();
     if (receivedData.type === "expert consultation") {
       return response.data;
@@ -146,13 +172,20 @@ const payment_update = async (req, res) => {
     );
 
     const status = response.data.payment.status;
-    
+    const paymentDate = response.data.payment.updatedAt;
+    const isSponsorshipAlt = response.data.payment?.orderId;
     const transaction = await Transaction.findOne({
       paymentId: paymentRef,
-    }).populate("sender", ["Email"]);
+    })
+      .populate("sender", ["Email"])
+      .populate("recipient", ["Nom", "Prenom"]);
+    if (isSponsorshipAlt === "1") {
+      transaction.sponsorshipStatus = "active";
+    }
 
     if (transaction) {
       transaction.paymentStatus = status;
+      transaction.paymentDate = paymentDate;
       await transaction.save();
     }
 
@@ -164,14 +197,22 @@ const payment_update = async (req, res) => {
     res.status(200).json({ message: "Payment status updated" });
 
     console.log(response.data);
+    console.log(response.data.payment);
     const variables = {
       total: response.data.payment.amount,
       amount: response.data.payment.amount,
-      transactionDate: new Date(
-        response.data.payment.updatedAt
-      ).toLocaleDateString(),
+      transactionDate: new Date(paymentDate).toLocaleDateString(),
       sponsorship: transaction.sponsorship,
     };
+
+    if (transaction.type === "expert consultation") {
+      const job = await Job.findByIdAndUpdate(
+        transaction.job,
+        { paymentStatus: "completed" },
+        { new: true }
+      );
+      variables.sponsorship = `${transaction.recipient.Nom} ${transaction.recipient.Prenom}`;
+    }
 
     await emailSender(clientEmail, subject, variables);
   } catch (error) {
@@ -180,22 +221,22 @@ const payment_update = async (req, res) => {
   }
 };
 
-const emailSender = async (email, subject, variables) => {
-  //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
-  // const subject = "Code de vérification pour votre inscription";
-  // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
+// const emailSender = async (email, subject, variables) => {
+//   //! ___REMEMBER_TO_PUT_THIS_INTO_A_SEPARATE_FILE_AND_IMPORT_IT___
+//   // const subject = "Code de vérification pour votre inscription";
+//   // const message = `Votre code de vérification est : ${code}. Utilisez ce code pour finaliser votre inscription.`;
 
-  try {
-    await sendEmail(email, subject, variables);
-    console.log("E-mail de notification envoyé avec succès");
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'envoi de l'e-mail de notification :",
-      error
-    );
-    throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
-  }
-};
+//   try {
+//     await sendEmail(email, subject, variables);
+//     console.log("E-mail de notification envoyé avec succès");
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de l'envoi de l'e-mail de notification :",
+//       error
+//     );
+//     throw new Error("Erreur lors de l'envoi de l'e-mail de notification");
+//   }
+// };
 
 module.exports = {
   payment,
