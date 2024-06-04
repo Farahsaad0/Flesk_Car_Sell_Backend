@@ -14,6 +14,7 @@ const register = async (req, res) => {
       ConfirmPassword,
       Role,
       Numero,
+      Numero,
       Adresse,
       Specialite,
       prix,
@@ -82,6 +83,7 @@ const register = async (req, res) => {
 
       const documentDeConfiance = req.files.map((file) => file.filename);
       const newExpert = new ExpertProfile({
+        specialite: Specialite,
         specialite: Specialite,
         prix,
         experience,

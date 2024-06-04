@@ -209,7 +209,9 @@ app.get(
   verifyJWT,
   jobController.getAssignedExpertIdsForCarAndClient
 );
-
+//contact rout ;
+app.post("/contacts",contactController.contact);
+app.get("/contacts",contactController.getContacts);
 //* admin routes:
 // app.post("/adminLogin", adminController.adminLogin);
 app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
