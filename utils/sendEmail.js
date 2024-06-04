@@ -43,7 +43,7 @@ const compileEmailNotificationTemplate = async () => {
 // Function to read and compile Handlebars notification template
 const compileGeneralNotificationTemplate = async () => {
   const templateHtml = await fs.promises.readFile(
-    "./views/notification.handlebars",
+    "./views/generalNotification.handlebars",
     "utf8"
   );
   return handlebars.compile(templateHtml);
