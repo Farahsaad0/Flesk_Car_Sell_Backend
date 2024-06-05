@@ -55,14 +55,14 @@ app.use(
 app.use(cookieParser()); 
 
 // Rate limiting middleware
-const loginLimiter = rateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login requests per windowMs
-  message: {
-    message:
-      "Too many login attempts from this IP, please try again after 15 minutes",
-  },
-});
+// const loginLimiter = rateLimiter({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // Limit each IP to 5 login requests per windowMs
+//   message: {
+//     message:
+//       "Trop de tentatives de connexion depuis cette adresse IP. Veuillez réessayer dans 15 minutes.",
+//   },
+// });
 
 const server = http.createServer(app);
 server.listen(8001, () => {
@@ -113,11 +113,12 @@ const logRequest = (req, res, next) => {
 app.use(logRequest);
 
 //* authentication routes
-app.post("/login", loginLimiter, authController.login);
+app.post("/login", authController.login);
 app.post("/register", file_multi_upload, authController.register);
 app.post("/resetPassword", authController.resetPassword);
 app.put("/changePassword/:token", authController.setPassword);
-app.post("/verify", userController.verifyRouteHandler);
+app.post("/verify", authController.verifyRouteHandler);
+app.post("/resendVerificationCode", authController.resendVerificationCode);
 app.get("/logout", logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);
 
@@ -209,9 +210,11 @@ app.get(
   verifyJWT,
   jobController.getAssignedExpertIdsForCarAndClient
 );
-//contact rout ;
+
+//* contact routes ;
 app.post("/contacts",contactController.contact);
 app.get("/contacts",contactController.getContacts);
+
 //* admin routes:
 // app.post("/adminLogin", adminController.adminLogin);
 app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);

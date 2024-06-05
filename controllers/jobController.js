@@ -4,6 +4,8 @@ const User = require("../Models/User");
 const Expert = require("../Models/expert");
 const emailSender = require("../utils/sendEmail");
 const { payment } = require("./paymentController");
+const path = require("path");
+const fs = require("fs");
 
 const createJob = async (req, res) => {
   try {
@@ -115,7 +117,6 @@ const getJobsByClientId = async (req, res) => {
 };
 
 const acceptJob = async (req, res) => {
-
   try {
     const jobId = req.params.jobId;
 
@@ -201,7 +202,7 @@ const rejectJob = async (req, res) => {
 
     job.accepted = "rejected";
     await job.save();
-    
+
     const variables = {
       type: "general notification",
       message: message,

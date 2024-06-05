@@ -516,10 +516,10 @@ const searchCarAds = async (req, res) => {
     // Combinaison des listes avec les annonces sponsorisées en premier
     const sortedAds = [...sponsoredAds, ...nonSponsoredAds];
 
+    const totalPages = Math.ceil((await CarAd.countDocuments(query)) / limit);
+
     res.status(200).json({
-      total: ads.length,
-      page: parseInt(page),
-      limit: parseInt(limit),
+      total: totalPages,
       data: sortedAds,
     }); // Renvoie les annonces triées
   } catch (error) {
