@@ -149,7 +149,7 @@ const updateUserData = async (req, res) => {
       photo: updatedUser.photo,
       specialite: updatedUser.ExpertId?.specialite,
     });
-  } catch (error) {
+  } catch (error) { 
     console.error("Error updating user data:", error);
     res.status(500).send("Error updating user data");
   }
