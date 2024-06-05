@@ -86,7 +86,7 @@ const payment = async (req, res) => {
     const config = {
       headers: {
         "x-api-key": process.env.KONNECT_API_KEY,
-      },
+      }, 
     };
     console.log("forth");
     const response = await axios.post(
