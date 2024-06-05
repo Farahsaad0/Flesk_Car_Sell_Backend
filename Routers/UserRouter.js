@@ -21,37 +21,37 @@ const Expert = require("../Models/expert");
 // };
 
 // Route pour valider le code de vérification et finaliser l'inscription
-let verifyRouteHandler = async (req, res) => {
-  try {
-    let { email, verificationCode } = req.body;
+// let verifyRouteHandler = async (req, res) => {
+//   try {
+//     let { email, verificationCode } = req.body;
 
-    // Recherche de l'utilisateur dans la base de données
-    let user = await User.findOne({ Email: email });
+//     // Recherche de l'utilisateur dans la base de données
+//     let user = await User.findOne({ Email: email });
 
-    // Vérification du code de vérification
-    if (!user || user.Verified_code !== parseInt(verificationCode)) {
-      return res
-        .status(400)
-        .json({ message: "Code de vérification invalide." });
-    }
+//     // Vérification du code de vérification
+//     if (!user || user.Verified_code !== parseInt(verificationCode)) {
+//       return res
+//         .status(400)
+//         .json({ message: "Code de vérification invalide." });
+//     }
 
-    // Marquer l'utilisateur comme vérifié
-    user.Verified = true;
+//     // Marquer l'utilisateur comme vérifié
+//     user.Verified = true;
 
-    await user.save();
+//     await user.save();
 
-    // Répondre avec un message de succès
-    res.status(200).json({ message: "Inscription finalisée avec succès." });
-  } catch (error) {
-    console.error(
-      "Erreur lors de la vérification du code de vérification :",
-      error
-    );
-    res.status(500).json({
-      message: "Erreur lors de la vérification du code de vérification.",
-    });
-  }
-};
+//     // Répondre avec un message de succès
+//     res.status(200).json({ message: "Inscription finalisée avec succès." });
+//   } catch (error) {
+//     console.error(
+//       "Erreur lors de la vérification du code de vérification :",
+//       error
+//     );
+//     res.status(500).json({
+//       message: "Erreur lors de la vérification du code de vérification.",
+//     });
+//   }
+// };
 
 // Définition de la fonction pour renvoyer les données de l'utilisateur
 let getUserData = async (req, res) => {
@@ -101,7 +101,7 @@ const updateUserData = async (req, res) => {
     console.log(req.body);
     console.log(req.body);
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).send("Utilisateur introuvable");
     }
 
     const { oldPassword, newPassword, Role, ...userData } = req.body;
@@ -117,7 +117,7 @@ const updateUserData = async (req, res) => {
     }
     // Check if old password is correct
     if (!(await bcrypt.compare(oldPassword, user.Password))) {
-      return res.status(400).send("Old password is incorrect");
+      return res.status(400).send("Le mot de passe est incorrect.");
     }
     let updatedUserData = { ...userData };
     if (req.file) {
@@ -129,7 +129,7 @@ const updateUserData = async (req, res) => {
 
       // Validate new password against the regex pattern
       if (!passwordRegex.test(newPassword)) {
-        return res.status(400).send("New password does not meet requirements");
+        return res.status(400).send("Le nouveau mot de passe ne répond pas aux exigences.");
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       updatedUserData.Password = hashedPassword;
@@ -151,7 +151,7 @@ const updateUserData = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating user data:", error);
-    res.status(500).send("Error updating user data");
+    res.status(500).send("Erreur lors de la mise à jour des données utilisateur.");
   }
 };
 
@@ -324,7 +324,7 @@ Cordialement,`;
 module.exports = {
   // login,
   // register,
-  verifyRouteHandler,
+  // verifyRouteHandler,
   getAllUsers,
   getPendingExperts,
   getUserById,

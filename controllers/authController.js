@@ -112,25 +112,30 @@ const register = async (req, res) => {
   }
 };
 
-let login = async (req, res) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const foundUser = await User.findOne({ Email: email.toLowerCase() }); // Ensure case-insensitive search
 
     if (!foundUser) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
     const isPasswordValid = await bcrypt.compare(password, foundUser.Password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      return res
+        .status(401)
+        .json({ message: "Nom d'utilisateur ou mot de passe non valide." });
     }
-    if (foundUser.Status === "Bloqué") {
+    if (foundUser.Statut === "Bloqué") {
       console.log(`Blocked login attempt for user: ${username}`);
-      return res.status(403).json({ message: "Invalid username or password" });
+      return res
+        .status(403)
+        .json({ message: "Nom d'utilisateur ou mot de passe non valide." });
     }
+
     //* Generate JWT token
     const token = jwt.sign(
       { userId: foundUser._id, email: foundUser.Email, role: foundUser.Role },
@@ -145,24 +150,100 @@ let login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    foundUser.refreshToken = refreshToken;
-    await foundUser.save();
+    // const unverifiedUser = foundUser;
+    if (foundUser.Verified === false) {
+      const { Password, ...unverifiedUserDetails } = foundUser.toObject();
+      res.status(200).json({ User: unverifiedUserDetails });
+    } else {
+      foundUser.refreshToken = refreshToken;
+      await foundUser.save();
 
-    const { Password, ...userDetails } = foundUser.toObject();
+      const { Password, ...userDetails } = foundUser.toObject();
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
 
-    res.status(200).json({ token, User: userDetails });
+      res.status(200).json({ token, User: userDetails });
+    }
   } catch (error) {
     console.error("Error logging in: ", error);
+    res.status(500).json({
+      error: "Impossible de se connecter. Veuillez réessayer plus tard.",
+    });
+  }
+};
+
+const resendVerificationCode = async (req, res) => {
+  const { email } = req.body;
+  const subject = "Code de vérification pour votre inscription";
+  try {
+    const user = await User.findOne({ Email: email });
+
+    if (!user) {
+      return res.status(400).json({ message: "cette compt n'existe pas." });
+    }
+    if (user.Verified !== false) {
+      return res
+        .status(400)
+        .json({ message: "cette email est deja verifier." });
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000);
+    user.Verified_code = verificationCode;
+    await user.save();
+
+    const variables = {
+      type: "verification Code",
+      code_de_verification: verificationCode,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+    await emailSender(user.Email, subject, variables);
+    res
+      .status(200)
+      .json({ message: "Code de verification envoyer avec succes." });
+  } catch (error) {
+    console.error("Erreur lors de la création de l'utilisateur :", error);
     res
       .status(500)
-      .json({ error: "Failed to log in. Please try again later." });
+      .json({
+        message: "Erreur lors de l'envoi de nouveau code de verification'.",
+      });
+  }
+};
+
+// Route pour valider le code de vérification et finaliser l'inscription
+const verifyRouteHandler = async (req, res) => {
+  const { email, verificationCode } = req.body;
+  try {
+    // Recherche de l'utilisateur dans la base de données
+    let user = await User.findOne({ Email: email });
+
+    // Vérification du code de vérification
+    if (!user || user.Verified_code !== parseInt(verificationCode)) {
+      return res
+        .status(400)
+        .json({ message: "Code de vérification invalide." });
+    }
+
+    // Marquer l'utilisateur comme vérifié
+    user.Verified = true;
+
+    await user.save();
+
+    // Répondre avec un message de succès
+    res.status(200).json({ message: "Inscription finalisée avec succès." });
+  } catch (error) {
+    console.error(
+      "Erreur lors de la vérification du code de vérification :",
+      error
+    );
+    res.status(500).json({
+      message: "Erreur lors de la vérification du code de vérification.",
+    });
   }
 };
 
@@ -175,7 +256,7 @@ const resetPassword = async (req, res) => {
 
     // If user not found, return error
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
     // Generate reset password token
@@ -187,7 +268,7 @@ const resetPassword = async (req, res) => {
 
     // Send reset password link to the user's email
     const resetLink = `${process.env.FRONTEND_URL}/changePassword/${resetToken}`;
-    const subject = "Password Reset Link";
+    const subject = "Lien de réinitialisation du mot de passe";
     const message = `Hello ${user.Prenom},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you didn't request this, please ignore this email.`;
 
     const variables = {
@@ -198,14 +279,16 @@ const resetPassword = async (req, res) => {
 
     await sendEmail(user.Email, subject, variables);
 
-    res
-      .status(200)
-      .json({ message: "Password reset link sent to your email." });
+    res.status(200).json({
+      message:
+        "Lien de réinitialisation du mot de passe envoyé à votre adresse e-mail.",
+    });
   } catch (error) {
     console.error("Error resetting password:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to reset password. Please try again later." });
+    res.status(500).json({
+      error:
+        "Impossible de réinitialiser le mot de passe. Veuillez réessayer plus tard.",
+    });
   }
 };
 
@@ -251,12 +334,13 @@ const setPassword = async (req, res) => {
     user.Password = hashedPassword;
     await user.save();
 
-    res.status(200).json({ message: "Password updated successfully." });
+    res.status(200).json({ message: "Mot de passe mis à jour avec succès." });
   } catch (error) {
     console.error("Error setting new password:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to set new password. Please try again later." });
+    res.status(500).json({
+      error:
+        "Impossible de définir le nouveau mot de passe. Veuillez réessayer plus tard.",
+    });
   }
 };
 
@@ -280,6 +364,8 @@ const setPassword = async (req, res) => {
 module.exports = {
   login,
   register,
+  verifyRouteHandler,
   resetPassword,
   setPassword,
+  resendVerificationCode,
 };

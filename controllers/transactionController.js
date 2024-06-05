@@ -86,14 +86,15 @@ const getTransactions = async (req, res) => {
 };
 
 const getExpertCompletedTransactions = async (req, res) => {
-  
   const sortField = req.query.sortField || "paymentDate";
   const sortOrder = parseInt(req.query.sortOrder) || -1;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
 
   const expertId = req.params.id;
+
   try {
+    // Query completed transactions with populated job
     const transactions = await Transaction.find({
       recipient: expertId,
       paymentStatus: "completed",
@@ -106,13 +107,23 @@ const getExpertCompletedTransactions = async (req, res) => {
       .populate("sender", ["Nom", "Prenom"])
       .sort({ [sortField]: sortOrder })
       .skip((page - 1) * limit)
-      .limit(limit);;
+      .limit(limit);
 
+    // Filter transactions where job is populated
     const completedTransactions = transactions.filter(
       (transaction) => transaction.job
     );
 
-    res.status(200).json(completedTransactions);
+    // Count completed transactions separately
+    const totalTransactionsCount = completedTransactions.length;
+
+    // Calculate total pages based on the total count
+    const totalPages = Math.ceil(totalTransactionsCount / limit);
+
+    res.status(200).json({
+      totalPages,
+      completedTransactions,
+    });
   } catch (error) {
     console.error("Error fetching completed transactions:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -120,18 +131,28 @@ const getExpertCompletedTransactions = async (req, res) => {
 };
 
 const getClientCompletedTransactions = async (req, res) => {
+  const sortField = req.query.sortField || "paymentDate";
+  const sortOrder = parseInt(req.query.sortOrder) || -1;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
   const clientId = req.params.id;
   try {
     const transactions = await Transaction.find({
       sender: clientId,
       paymentStatus: "completed",
-    }).populate("recipient", ["Nom", "Prenom", "Role"]);
+    })
+      .populate("recipient", ["Nom", "Prenom", "Role"])
+      .populate("sender", ["Nom", "Prenom"])
+      .sort({ [sortField]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
-    // const completedTransactions = transactions.filter(
-    //   (transaction) => transaction.job
-    // );
+    const totalTransactions = transactions.length;
 
-    res.status(200).json(transactions);
+    res.status(200).json({
+      totalPages: Math.ceil(totalTransactions / limit),
+      transactions,
+    });
   } catch (error) {
     console.error("Error fetching completed transactions:", error);
     res.status(500).json({ error: "Internal Server Error" });
