@@ -33,6 +33,10 @@ const createJob = async (req, res) => {
 
 const getJobsByExpertId = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sortBy = req.query.sortBy || "submitDate";
+    const sortOrder = parseInt(req.query.sortOrder) || -1;
     const expertId = req.params.expertId;
 
     // Find all jobs where expert matches the provided expertId
@@ -45,15 +49,27 @@ const getJobsByExpertId = async (req, res) => {
         "model",
         "année",
         "location",
-      ]);
+      ])
+      .sort({ [sortBy]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalJobs = await Job.countDocuments({ expert: expertId });
 
     if (!jobs || jobs.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "No jobs found for this expert" });
+        .json({
+          success: false,
+          message: "Vous n'avez reçu aucune demande d'expertise",
+        });
     }
 
-    res.status(200).json({ success: true, data: jobs });
+    res.status(200).json({
+      success: true,
+      data: jobs,
+      totalPages: Math.ceil(totalJobs / limit),
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, error: "Server Error" });
@@ -90,6 +106,10 @@ const getJobById = async (req, res) => {
 const getJobsByClientId = async (req, res) => {
   try {
     const clientId = req.params.clientId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sortBy = req.query.sortBy || "submitDate";
+    const sortOrder = parseInt(req.query.sortOrder) || -1;
 
     // Find all jobs where expert matches the provided expertId
     const jobs = await Job.find({ client: clientId })
@@ -101,15 +121,25 @@ const getJobsByClientId = async (req, res) => {
         "model",
         "année",
         "location",
-      ]);
+      ])
+      .sort({ [sortBy]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalJobs = await Job.countDocuments({ client: clientId });
 
     if (!jobs || jobs.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No jobs found for this client" });
+      return res.status(404).json({
+        success: false,
+        message: "Vous n'avez initié aucune demande d'expertise",
+      });
     }
 
-    res.status(200).json({ success: true, data: jobs });
+    res.status(200).json({
+      success: true,
+      data: jobs,
+      totalPages: Math.ceil(totalJobs / limit),
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, error: "Server Error" });

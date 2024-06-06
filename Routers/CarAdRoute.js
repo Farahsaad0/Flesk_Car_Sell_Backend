@@ -234,7 +234,7 @@ const createCarAd = async (req, res) => {
   }
 };
 
-let getAllCarAds = async (req, res) => {
+const getAllCarAds = async (req, res) => {
   const sortField = req.query.sortField || "date";
   const sortOrder = parseInt(req.query.sortOrder) || -1;
   const page = parseInt(req.query.page) || 1;
@@ -247,7 +247,7 @@ let getAllCarAds = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-      const totalAds = await CarAd.countDocuments();
+    const totalAds = await CarAd.countDocuments();
 
     const sponsoredAds = ads.filter(
       (ad) =>
@@ -368,12 +368,12 @@ let getCarAdById = async (req, res) => {
       .populate("sponsorship");
     if (!ad) {
       return res.status(404).json({ error: "Annonce non trouvée" });
-    } 
+    }
     res.status(200).json(ad);
   } catch (error) {
     console.error("Erreur lors de la récupération de l'annonce :", error);
     res
-      .status(500) 
+      .status(500)
       .json({ error: "Erreur lors de la récupération de l'annonce " + error });
   }
 };
@@ -581,6 +581,62 @@ const getCarAdsByFeature = async (req, res) => {
   }
 };
 
+const carAdSponsorshipStat = async (req, res) => {
+  try {
+    const totalCarAds = await CarAd.countDocuments();
+
+    const activeSponsoredCarAds = await CarAd.aggregate([
+      {
+        $lookup: {
+          from: "transactions",
+          localField: "sponsorship",
+          foreignField: "_id",
+          as: "sponsorshipDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$sponsorshipDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          "sponsorshipDetails.sponsorshipStatus": "active",
+        },
+      },
+      {
+        $count: "activeSponsored",
+      },
+    ]);
+
+    const activeSponsoredCount =
+      activeSponsoredCarAds.length > 0
+        ? activeSponsoredCarAds[0].activeSponsored
+        : 0;
+    const unsponsoredCount = totalCarAds - activeSponsoredCount;
+
+    const activeSponsoredPercentage = (
+      (activeSponsoredCount / totalCarAds) *
+      100
+    ).toFixed(2);
+    const unsponsoredPercentage = (
+      (unsponsoredCount / totalCarAds) *
+      100
+    ).toFixed(2);
+
+    res.status(200).json({
+      activeSponsoredPercentage,
+      unsponsoredPercentage,
+      activeSponsoredCount,
+      unsponsoredCount,
+    });
+  } catch (error) {
+    console.error("Error fetching car sponsorship stats:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 // const delete_unused_photos = async (req, res) => {
 //   try {
 //     // Find all photo paths from CarAds
@@ -624,5 +680,6 @@ module.exports = {
   searchCarAds,
   getCarAdByUserId,
   getCarAdsByFeature,
+  carAdSponsorshipStat,
   // delete_unused_photos,
 };
