@@ -130,14 +130,20 @@ const login = async (req, res) => {
         .json({ message: "Nom d'utilisateur ou mot de passe non valide." });
     }
     if (foundUser.Statut === "Bloqué") {
-      console.log(`Blocked login attempt for user: ${username}`);
+      console.log(`Blocked login attempt for user: ${foundUser.Nom}`);
       return res
         .status(403)
-        .json({ message: "Nom d'utilisateur ou mot de passe non valide." });
+        .json({ message: "Votre compte est bloqué par l'administrateur" });
+    }
+    if (foundUser.Statut === "En attente" && foundUser.ExpertId) {
+      console.log(`Blocked login attempt for user: ${foundUser.Nom}`);
+      return res
+        .status(403)
+        .json({ message: "Votre compte est en attent de l'acceptation de l'administrateur" }); 
     }
 
     //* Generate JWT token
-    const token = jwt.sign(
+    const token = jwt.sign( 
       { userId: foundUser._id, email: foundUser.Email, role: foundUser.Role },
       process.env.JWT_PASS,
       { expiresIn: "10m" }

@@ -23,7 +23,7 @@ const payment = async (req, res) => {
     recipient = receivedData.expertId;
     job = receivedData.jobId;
     type = receivedData.type;
-    redirectToOnSuccess = "https://8n7vlqww-3000.euw.devtunnels.ms/demande";
+    redirectToOnSuccess = "https://46t60b15-3000.uks1.devtunnels.ms/demande";
   } else if (receivedData.type === "down payment") {
     console.log("first 2");
     amount = receivedData.amount;
@@ -35,13 +35,13 @@ const payment = async (req, res) => {
     amount = sponsorship.price * 1000;
     type = "sponsorship";
     c_orderId = true;
-    redirectToOnSuccess = `https://8n7vlqww-3000.euw.devtunnels.ms/edit-car/${receivedData.carAd}`;
+    redirectToOnSuccess = `https://46t60b15-3000.uks1.devtunnels.ms/edit-car/${receivedData.carAd}`;
   } else {
     console.log("first 4");
     sponsorship = await Sponsorship.findById(receivedData.sponsorship);
     amount = sponsorship.price * 1000;
     type = "sponsorship";
-    redirectToOnSuccess = "https://8n7vlqww-3000.euw.devtunnels.ms/create-ad";
+    redirectToOnSuccess = "https://46t60b15-3000.uks1.devtunnels.ms/create-ad";
   }
 
   console.log(
@@ -72,7 +72,7 @@ const payment = async (req, res) => {
     lifespan: 10,
     checkoutForm: false,
     addPaymentFeesToAmount: false,
-    webhook: "https://8n7vlqww-8000.euw.devtunnels.ms/konnect/webhook",
+    webhook: "https://46t60b15-8000.uks1.devtunnels.ms/konnect/webhook",
     silentWebhook: true,
     successUrl: redirectToOnSuccess,
     failUrl: "https://dev.konnect.network/gateway/payment-failure",
