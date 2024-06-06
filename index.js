@@ -52,7 +52,7 @@ app.use(
   })
 );
 // app.use(cors());
-app.use(cookieParser()); 
+app.use(cookieParser());
 
 // Rate limiting middleware
 // const loginLimiter = rateLimiter({
@@ -126,6 +126,13 @@ app.get("/refresh", refreshTokenController.handleRefreshToken);
 app.use("/images", express.static("public/uploads/"));
 app.use("/documents", express.static("public/uploads/"));
 
+//* stat routes
+app.get("/users/role/stat", userController.userRolesStat);
+app.get("/users/lastFive/stat", userController.getLastFiveUsers);
+app.get("/users/registration/stat", userController.userRegistrationsOverTime);
+app.get("/transactions/profit/stat", transactionController.getTransactions);
+app.get("/carAds/sponsorship/stat", carAdController.carAdSponsorshipStat);
+
 //* user related routes:
 app.get("/getUserData/:id", userController.getUserData);
 app.put("/updateUserData/:id", single_upload, userController.updateUserData);
@@ -168,7 +175,8 @@ app.get(
   "/transactions/:id",
   transactionController.getClientCompletedTransactions
 );
-app.get("/transactions/", transactionController.getTransactions);
+
+app.get("/transactions", verifyJWT, transactionController.getAllTransactions);
 
 //* Sponsorship routes:
 app.post("/sponsorship", verifyJWT, sponsorshipController.createSponsorship);
@@ -212,8 +220,8 @@ app.get(
 );
 
 //* contact routes ;
-app.post("/contacts",contactController.contact);
-app.get("/contacts",contactController.getContacts);
+app.post("/contacts", contactController.contact);
+app.get("/contacts", contactController.getContacts);
 
 //* admin routes:
 // app.post("/adminLogin", adminController.adminLogin);

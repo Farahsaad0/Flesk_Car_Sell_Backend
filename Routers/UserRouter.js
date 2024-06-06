@@ -129,7 +129,9 @@ const updateUserData = async (req, res) => {
 
       // Validate new password against the regex pattern
       if (!passwordRegex.test(newPassword)) {
-        return res.status(400).send("Le nouveau mot de passe ne répond pas aux exigences.");
+        return res
+          .status(400)
+          .send("Le nouveau mot de passe ne répond pas aux exigences.");
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       updatedUserData.Password = hashedPassword;
@@ -149,9 +151,11 @@ const updateUserData = async (req, res) => {
       photo: updatedUser.photo,
       specialite: updatedUser.ExpertId?.specialite,
     });
-  } catch (error) { 
+  } catch (error) {
     console.error("Error updating user data:", error);
-    res.status(500).send("Erreur lors de la mise à jour des données utilisateur.");
+    res
+      .status(500)
+      .send("Erreur lors de la mise à jour des données utilisateur.");
   }
 };
 
@@ -321,6 +325,55 @@ Cordialement,`;
   }
 };
 
+const userRolesStat = async (req, res) => {
+  try {
+    const rolesCount = await User.aggregate([
+      {
+        $group: {
+          _id: "$Role",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json(rolesCount);
+  } catch (error) {
+    console.error("Error fetching user roles:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const userRegistrationsOverTime = async (req, res) => {
+  try {
+    const registrations = await User.aggregate([
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$JoinDate" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    res.status(200).json(registrations);
+  } catch (error) {
+    console.error("Error fetching user registrations over time:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getLastFiveUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({ JoinDate: -1 }).limit(5);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching last 5 users:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   // login,
   // register,
@@ -332,4 +385,7 @@ module.exports = {
   updateUserData,
   blockUser,
   unblockUser,
+  userRolesStat,
+  userRegistrationsOverTime,
+  getLastFiveUsers,
 };

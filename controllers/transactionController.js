@@ -10,11 +10,11 @@ const getInactivatedSponsorships = async (req, res) => {
       sponsorshipStatus: "pending",
       paymentStatus: "completed",
     });
-    if (sponsorships.length === 0) {
-      return res
-        .status(404)
-        .json({ success: "No Inactivated Sponsorships for this user" });
-    }
+    // if (sponsorships.length === 0) {
+    //   return res
+    //     .status(404)
+    //     .json({ success: "No Inactivated Sponsorships for this user" });
+    // }
     res.status(200).json(sponsorships);
   } catch (error) {
     console.error("Error fetching inactivated sponsorships:", error);
@@ -85,6 +85,41 @@ const getTransactions = async (req, res) => {
   }
 };
 
+const getAllTransactions = async (req, res) => {
+  const sortField = req.query.sortField || "paymentDate";
+  const sortOrder = req.query.sortOrder === "1" ? 1 : -1;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  try {
+    // Count all completed transactions
+    const totalTransactionsCount = await Transaction.countDocuments({
+      paymentStatus: "completed",
+    });
+
+    // Calculate total pages based on the total count
+    const totalPages = Math.ceil(totalTransactionsCount / limit);
+
+    // Query completed transactions with populated job
+    const transactions = await Transaction.find({
+      paymentStatus: "completed",
+    })
+      .populate("sender", ["Nom", "Prenom"])
+      .populate("recipient", ["Nom", "Prenom", "Role"])
+      .sort({ [sortField]: sortOrder })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      totalPages,
+      transactions,
+    });
+  } catch (error) {
+    console.error("Error fetching completed transactions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 const getExpertCompletedTransactions = async (req, res) => {
   const sortField = req.query.sortField || "paymentDate";
   const sortOrder = parseInt(req.query.sortOrder) || -1;
@@ -99,11 +134,11 @@ const getExpertCompletedTransactions = async (req, res) => {
       recipient: expertId,
       paymentStatus: "completed",
     })
-      .populate({
-        path: "job",
-        select: "accepted",
-        match: { accepted: "completed" },
-      })
+      // .populate({
+      //   path: "job",
+      //   select: "accepted",
+      //   match: { accepted: "accepted" },
+      // })
       .populate("sender", ["Nom", "Prenom"])
       .sort({ [sortField]: sortOrder })
       .skip((page - 1) * limit)
@@ -219,4 +254,5 @@ module.exports = {
   getExpertCompletedTransactions,
   getClientCompletedTransactions,
   getTransactions,
+  getAllTransactions,
 };
