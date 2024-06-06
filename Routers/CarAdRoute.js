@@ -247,25 +247,7 @@ const getAllCarAds = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-      const totalAds = await CarAd.countDocuments();
-
-    const sponsoredAds = ads.filter(
-      (ad) =>
-        ad.sponsorship &&
-        ad.sponsorship.sponsorshipStatus === "active" &&
-        ad.sponsorship.features.includes(
-          "Mis en avant dans les résultats de recherche"
-        )
-    );
-    const nonSponsoredAds = ads.filter(
-      (ad) =>
-        !ad.sponsorship ||
-        ad.sponsorship.sponsorshipStatus !== "active" ||
-        !ad.sponsorship.features.includes(
-          "Mis en avant dans les résultats de recherche"
-        )
-    );
-    const sortedAds = [...sponsoredAds, ...nonSponsoredAds];
+    const totalAds = await CarAd.countDocuments();
 
     const sponsoredAds = ads.filter(
       (ad) =>
@@ -386,12 +368,12 @@ let getCarAdById = async (req, res) => {
       .populate("sponsorship");
     if (!ad) {
       return res.status(404).json({ error: "Annonce non trouvée" });
-    } 
+    }
     res.status(200).json(ad);
   } catch (error) {
     console.error("Erreur lors de la récupération de l'annonce :", error);
     res
-      .status(500) 
+      .status(500)
       .json({ error: "Erreur lors de la récupération de l'annonce " + error });
   }
 };
