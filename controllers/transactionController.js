@@ -31,7 +31,7 @@ const getMonthName = (monthIndex) => {
     "May",
     "June",
     "July",
-    "Aug",
+    "Aug", 
     "Sep",
     "Oct",
     "Nov",

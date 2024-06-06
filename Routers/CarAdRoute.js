@@ -247,7 +247,25 @@ const getAllCarAds = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-    const totalAds = await CarAd.countDocuments();
+      const totalAds = await CarAd.countDocuments();
+
+    const sponsoredAds = ads.filter(
+      (ad) =>
+        ad.sponsorship &&
+        ad.sponsorship.sponsorshipStatus === "active" &&
+        ad.sponsorship.features.includes(
+          "Mis en avant dans les résultats de recherche"
+        )
+    );
+    const nonSponsoredAds = ads.filter(
+      (ad) =>
+        !ad.sponsorship ||
+        ad.sponsorship.sponsorshipStatus !== "active" ||
+        !ad.sponsorship.features.includes(
+          "Mis en avant dans les résultats de recherche"
+        )
+    );
+    const sortedAds = [...sponsoredAds, ...nonSponsoredAds];
 
     const sponsoredAds = ads.filter(
       (ad) =>
@@ -280,7 +298,6 @@ const getAllCarAds = async (req, res) => {
       .json({ error: "Erreur lors de la récupération des annonces " + error });
   }
 };
-
 //  modifier une annonce de voiture
 const updateCarAd = async (req, res) => {
   try {
@@ -369,12 +386,12 @@ let getCarAdById = async (req, res) => {
       .populate("sponsorship");
     if (!ad) {
       return res.status(404).json({ error: "Annonce non trouvée" });
-    }
+    } 
     res.status(200).json(ad);
   } catch (error) {
     console.error("Erreur lors de la récupération de l'annonce :", error);
     res
-      .status(500)
+      .status(500) 
       .json({ error: "Erreur lors de la récupération de l'annonce " + error });
   }
 };
@@ -385,7 +402,9 @@ let getCarAdByUserId = async (req, res) => {
     const { userId } = req.params;
 
     // Rechercher toutes les annonces de voiture de l'utilisateur spécifié
-    const ads = await CarAd.find({ utilisateur: userId });
+    const ads = await CarAd.find({ utilisateur: userId }).populate(
+      "sponsorship"
+    );
     res.status(200).json(ads); // Renvoie les annonces correspondantes
   } catch (error) {
     console.error(
