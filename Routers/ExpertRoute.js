@@ -54,7 +54,7 @@ let getApprovedExperts = async (req, res) => {
       Role: "Expert",
       Statut: "Approuvé",
     })
-      .select("-Password -Verified_code")
+      .select("-Password -Verified_code -refreshToken")
       .populate("ExpertId") // Populate the ExpertId field to fetch related data from the expert collection
       .skip((page - 1) * perPage)
       .limit(perPage);
@@ -287,7 +287,7 @@ const demandeExpertRole = async (req, res) => {
       userId,
       { Role: "Expert", Statut: "En attente", ExpertId: null }, // Réinitialisez ExpertId à null pour éviter les doublons
       { new: true }
-    );
+    ).select("-Password -Verified_code -refreshToken");
     if (!user) {
       return res.status(404).json({ message: "Utilisateur non trouvé." });
     }

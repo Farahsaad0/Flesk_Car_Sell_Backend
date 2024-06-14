@@ -119,7 +119,7 @@ app.post("/resetPassword", authController.resetPassword);
 app.put("/changePassword/:token", authController.setPassword);
 app.post("/verify", authController.verifyRouteHandler);
 app.post("/resendVerificationCode", authController.resendVerificationCode);
-app.get("/logout", logoutController.handleLogout);
+app.get("/logout", verifyJWT, logoutController.handleLogout);
 app.get("/refresh", refreshTokenController.handleRefreshToken);
 
 //* file routes:
@@ -127,15 +127,15 @@ app.use("/images", express.static("public/uploads/"));
 app.use("/documents", express.static("public/uploads/"));
 
 //* stat routes
-app.get("/users/role/stat", userController.userRolesStat);
-app.get("/users/lastFive/stat", userController.getLastFiveUsers);
-app.get("/users/registration/stat", userController.userRegistrationsOverTime);
-app.get("/transactions/profit/stat", transactionController.getTransactions);
-app.get("/carAds/sponsorship/stat", carAdController.carAdSponsorshipStat);
+app.get("/users/role/stat", verifyJWT, userController.userRolesStat);
+app.get("/users/lastFive/stat", verifyJWT, userController.getLastFiveUsers);
+app.get("/users/registration/stat", verifyJWT, userController.userRegistrationsOverTime);
+app.get("/transactions/profit/stat", verifyJWT, transactionController.getTransactions);
+app.get("/carAds/sponsorship/stat", verifyJWT, carAdController.carAdSponsorshipStat);
 
 //* user related routes:
 app.get("/getUserData/:id", userController.getUserData);
-app.put("/updateUserData/:id", single_upload, userController.updateUserData);
+app.put("/updateUserData/:id", verifyJWT, single_upload, userController.updateUserData);
 app.get("/getAllUsers", verifyJWT, userController.getAllUsers);
 app.get("/getUser/:id", userController.getUserById);
 
@@ -164,15 +164,15 @@ app.get("/carAdCache/:userId", carAdCacheController.getCarAdCache);
 
 //* transaction routes:
 app.get(
-  "/sponsorships/available/:userId",
+  "/sponsorships/available/:userId", verifyJWT,
   transactionController.getInactivatedSponsorships
 );
 app.get(
-  "/transactions/expert/:id",
+  "/transactions/expert/:id", verifyJWT,
   transactionController.getExpertCompletedTransactions
 );
 app.get(
-  "/transactions/:id",
+  "/transactions/:id", verifyJWT,
   transactionController.getClientCompletedTransactions
 );
 
@@ -196,23 +196,29 @@ app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.post(
   "/demandeExpert",
+  verifyJWT,
   file_multi_upload,
   expertController.demandeExpertRole
 );
 app.get("/nbExpertisme/:id", expertController.getJobsCountByExpert);
 
 //* Job routes:
-app.post("/createJob", jobController.createJob);
-app.get("/job/:id", jobController.getJobById);
-app.post("/job/:id/upload", file_multi_upload, jobController.uploadDocuments);
-app.delete("/job/:id/files/:fileName", jobController.deleteDocument);
-app.get("/job/files", jobController.fetchAllDocuments);
+app.post("/createJob", verifyJWT, jobController.createJob);
+app.get("/job/:id", verifyJWT, jobController.getJobById);
+app.post(
+  "/job/:id/upload",
+  verifyJWT,
+  file_multi_upload,
+  jobController.uploadDocuments
+);
+app.delete("/job/:id/files/:fileName", verifyJWT, jobController.deleteDocument);
+app.get("/job/files", verifyJWT, jobController.fetchAllDocuments);
 // app.post("/job/:id/chat", jobController.sendMessage); // depricated
-app.get("/jobs/expert/:expertId", jobController.getJobsByExpertId);
-app.get("/jobs/client/:clientId", jobController.getJobsByClientId);
-app.put("/jobs/accept/:jobId", jobController.acceptJob);
-app.put("/jobs/reject/:jobId", jobController.rejectJob);
-app.put("/jobs/cancel/:jobId", jobController.cancelJob);
+app.get("/jobs/expert/:expertId", verifyJWT, jobController.getJobsByExpertId);
+app.get("/jobs/client/:clientId", verifyJWT, jobController.getJobsByClientId);
+app.put("/jobs/accept/:jobId", verifyJWT, jobController.acceptJob);
+app.put("/jobs/reject/:jobId", verifyJWT, jobController.rejectJob);
+app.put("/jobs/cancel/:jobId", verifyJWT, jobController.cancelJob);
 app.get(
   "/jobs/car/:carAdId/assigned-experts",
   verifyJWT,
@@ -221,7 +227,7 @@ app.get(
 
 //* contact routes ;
 app.post("/contacts", contactController.contact);
-app.get("/contacts", contactController.getContacts);
+app.get("/contacts", verifyJWT, contactController.getContacts);
 
 //* admin routes:
 // app.post("/adminLogin", adminController.adminLogin);
