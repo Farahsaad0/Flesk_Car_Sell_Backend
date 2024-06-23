@@ -210,7 +210,7 @@ const createCarAd = async (req, res) => {
 
       if (transaction) {
         const durationInMilliseconds =
-          transaction.duration * 24 * 60 * 60 * 1000;
+          transaction.duration * 24 * 60 * 60 * 1000; // duree sponsorship 
 
         const expirationDate = new Date(Date.now() + durationInMilliseconds);
 
@@ -249,7 +249,7 @@ const getAllCarAds = async (req, res) => {
 
     const totalAds = await CarAd.countDocuments();
 
-    const sponsoredAds = ads.filter(
+    const sponsoredAds = ads.filter( // les sponsoridées affiche les premiers 
       (ad) =>
         ad.sponsorship &&
         ad.sponsorship.sponsorshipStatus === "active" &&
@@ -257,7 +257,7 @@ const getAllCarAds = async (req, res) => {
           "Mis en avant dans les résultats de recherche"
         )
     );
-    const nonSponsoredAds = ads.filter(
+    const nonSponsoredAds = ads.filter(  
       (ad) =>
         !ad.sponsorship ||
         ad.sponsorship.sponsorshipStatus !== "active" ||
@@ -359,7 +359,7 @@ let deleteCarAd = async (req, res) => {
 };
 
 //  récupérer une seule annonce de voiture par son ID
-let getCarAdById = async (req, res) => {
+let getCarAdById = async (req, res) => { // lorsque j'entre dans les details d'une annonce
   try {
     const { id } = req.params;
 
@@ -379,7 +379,7 @@ let getCarAdById = async (req, res) => {
 };
 
 // récupérer toutes les annonces de voiture par l'ID de l'utilisateur
-let getCarAdByUserId = async (req, res) => {
+let getCarAdByUserId = async (req, res) => { // lorsque l'admin entre le profil d'utilisateur , et lorque l'utilisateur entre dans ses annonces 
   try {
     const { userId } = req.params;
 
@@ -566,7 +566,7 @@ const searchCarAds = async (req, res) => {
 };
 
 // Route to search and return CarAds by the specified feature in their sponsorship
-const getCarAdsByFeature = async (req, res) => {
+const getCarAdsByFeature = async (req, res) => { // les annonces sponsorisées 
   try {
     // Extract the feature from the query parameters
     const { feature } = req.query;
@@ -594,7 +594,7 @@ const getCarAdsByFeature = async (req, res) => {
   }
 };
 
-const carAdSponsorshipStat = async (req, res) => {
+const carAdSponsorshipStat = async (req, res) => { // statistique de sponsor 
   try {
     const totalCarAds = await CarAd.countDocuments();
 

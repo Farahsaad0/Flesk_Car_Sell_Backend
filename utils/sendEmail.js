@@ -20,7 +20,7 @@ const compileEmailTemplate = async () => {
     "utf8"
   );
   return handlebars.compile(templateHtml);
-};
+}; // compiler la template 
 
 // Function to read and compile Handlebars Verification Code template
 const compileEmailVerificationCode = async () => {

@@ -157,7 +157,7 @@ const payment = async (req, res) => {
   }
 };
 
-const payment_update = async (req, res) => {
+const payment_update = async (req, res) => { //  c notre webhook 
   const paymentRef = req.query.payment_ref;
   try {
     const config = {

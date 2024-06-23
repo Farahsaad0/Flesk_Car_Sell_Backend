@@ -7,7 +7,7 @@ const { payment } = require("./paymentController");
 const path = require("path");
 const fs = require("fs");
 
-const createJob = async (req, res) => {
+const createJob = async (req, res) => { // demande d'expertise 
   try {
     const subject = "Nouvelle demande d'expertise";
 
@@ -48,7 +48,7 @@ L'équipe de Flesk Car Sell`;
   }
 };
 
-const getJobsByExpertId = async (req, res) => {
+const getJobsByExpertId = async (req, res) => { // voir led demande s'expertise par les experts 
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -91,7 +91,7 @@ const getJobsByExpertId = async (req, res) => {
   }
 };
 
-const getJobById = async (req, res) => {
+const getJobById = async (req, res) => { // l'expertisme
   try {
     const jobId = req.params.id; // Corrected variable name
 
@@ -118,7 +118,7 @@ const getJobById = async (req, res) => {
   }
 };
 
-const getJobsByClientId = async (req, res) => {
+const getJobsByClientId = async (req, res) => { // les demandes d'expertisme envoyées 
   try {
     const clientId = req.params.clientId;
     const page = parseInt(req.query.page) || 1;
@@ -161,7 +161,7 @@ const getJobsByClientId = async (req, res) => {
   }
 };
 
-const acceptJob = async (req, res) => {
+const acceptJob = async (req, res) => { // accepter expertise
   try {
     const jobId = req.params.jobId;
 
@@ -227,7 +227,7 @@ const acceptJob = async (req, res) => {
   }
 };
 
-const rejectJob = async (req, res) => {
+const rejectJob = async (req, res) => { // rejeter expertise
   const subject = "mise a jour de votre demand d'expertism";
   const message =
     "Nous tenons à vous informer que votre demande a été rejetée par l'expert. Nous comprenons que cela puisse être décevant, mais nous vous encourageons à ne pas vous inquiéter. Vous pouvez toujours demander un autre expertism.";
@@ -263,7 +263,7 @@ const rejectJob = async (req, res) => {
   }
 };
 
-const cancelJob = async (req, res) => {
+const cancelJob = async (req, res) => { // l'utilisateur annuler sa demande 
   try {
     const jobId = req.params.jobId;
 
@@ -287,7 +287,7 @@ const cancelJob = async (req, res) => {
   }
 };
 
-const getAssignedExpertIdsForCarAndClient = async (req, res) => {
+const getAssignedExpertIdsForCarAndClient = async (req, res) => { // menjmsh n3awed demande l nefs expert nefs l karhba 
   const carAdId = req.params.carAdId;
   const client = req.userId;
   try {
@@ -328,7 +328,7 @@ const sendMessage = async (req, res) => {
   }
 };
 
-const uploadDocuments = async (req, res) => {
+const uploadDocuments = async (req, res) => { //rapport 
   try {
     const jobId = req.params.id;
     const job = await Job.findById(jobId);
@@ -345,7 +345,7 @@ const uploadDocuments = async (req, res) => {
   }
 };
 
-const deleteDocument = async (req, res) => {
+const deleteDocument = async (req, res) => { // supp rapport
   try {
     const jobId = req.params.id;
     const fileName = req.params.fileName;
@@ -373,7 +373,7 @@ const deleteDocument = async (req, res) => {
   }
 };
 
-const fetchAllDocuments = async (req, res) => {
+const fetchAllDocuments = async (req, res) => { // afficher les rapport ou photo
   try {
     const jobs = await Job.find({ documents: { $ne: [] } }).select("documents");
     const files = jobs.reduce((acc, job) => acc.concat(job.documents), []);

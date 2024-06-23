@@ -3,7 +3,7 @@ const Transaction = require("../Models/transaction");
 const emailSender = require("../utils/sendEmail");
 
 // Read route
-const getInactivatedSponsorships = async (req, res) => {
+const getInactivatedSponsorships = async (req, res) => { // c une sponsor acheté mais pas utilisé 
   try {
     const sponsorships = await Transaction.find({
       sender: req.params.userId,
@@ -40,7 +40,7 @@ const getMonthName = (monthIndex) => {
   return months[monthIndex];
 };
 
-const getTransactions = async (req, res) => {
+const getTransactions = async (req, res) => { // statistique transactions eli sarouu  
   try {
     const transactions = await Transaction.find({
       paymentStatus: "completed",
@@ -250,9 +250,9 @@ const updateSponsorshipStatus = async (transactionId, status) => {
 setInterval(checkAndUpdateSponsorshipStatus, 1000 * 60 * 60);
 
 module.exports = {
-  getInactivatedSponsorships,
-  getExpertCompletedTransactions,
+  getInactivatedSponsorships, 
+  getExpertCompletedTransactions, 
   getClientCompletedTransactions,
-  getTransactions,
-  getAllTransactions,
+  getTransactions, // pour les stat
+  getAllTransactions, 
 };
