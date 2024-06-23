@@ -106,7 +106,7 @@ let updateAdminCredentials = async (req, res) => {
   }
 };
 
-module.exports = {
-  adminLogin,
-  updateAdminCredentials,
-};
+// module.exports = {
+//   adminLogin,
+//   updateAdminCredentials,
+// };

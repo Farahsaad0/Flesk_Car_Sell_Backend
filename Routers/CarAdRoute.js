@@ -238,7 +238,7 @@ const getAllCarAds = async (req, res) => {
   const sortField = req.query.sortField || "date";
   const sortOrder = parseInt(req.query.sortOrder) || -1;
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = parseInt(req.query.limit) || 12;
 
   try {
     const ads = await CarAd.find()
@@ -464,6 +464,7 @@ const searchCarAds = async (req, res) => {
       prixFrom,
       prixTo,
       adresse,
+      date,
       page = 1,
       limit = 10,
     } = req.query;
@@ -477,6 +478,18 @@ const searchCarAds = async (req, res) => {
     // Filtrer par modèle (insensible à la casse)
     if (modele) {
       query.modele = new RegExp(modele, "i");
+    }
+
+    // Filtrer par date de publication 
+    if (date) {
+      const parsedDate = new Date(date);
+      const startOfDay = new Date(parsedDate.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(parsedDate.setHours(23, 59, 59, 999));
+      
+      query.date = {
+        $gte: startOfDay,
+        $lte: endOfDay
+      };
     }
 
     // Filtrer par année (intervalle)
@@ -499,7 +512,7 @@ const searchCarAds = async (req, res) => {
 
     // Filtrer par adresse
     if (adresse) {
-      query.adresse = new RegExp(adresse, "i");
+      query.location = new RegExp(adresse, "i");
     }
 
     console.log(query);

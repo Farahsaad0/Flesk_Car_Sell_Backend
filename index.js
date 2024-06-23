@@ -18,7 +18,7 @@ const rateLimiter = require("express-rate-limit");
 const userController = require("./Routers/UserRouter");
 const carAdController = require("./Routers/CarAdRoute");
 const expertController = require("./Routers/ExpertRoute");
-const adminController = require("./Routers/AdminRoute");
+// const adminController = require("./Routers/AdminRoute");
 const logoutController = require("./controllers/logoutController");
 const refreshTokenController = require("./controllers/refreshTokenController");
 const sponsorshipController = require("./controllers/sponsorshipController");
@@ -55,14 +55,14 @@ app.use(
 app.use(cookieParser());
 
 // Rate limiting middleware
-// const loginLimiter = rateLimiter({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 5, // Limit each IP to 5 login requests per windowMs
-//   message: {
-//     message:
-//       "Trop de tentatives de connexion depuis cette adresse IP. Veuillez réessayer dans 15 minutes.",
-//   },
-// });
+const loginLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000, 
+  max: 5, 
+  message: {
+    message:
+      "Trop de tentatives de connexion depuis cette adresse IP. Veuillez réessayer dans 15 minutes.",
+  },
+});
 
 const server = http.createServer(app);
 server.listen(8001, () => {
@@ -113,7 +113,7 @@ const logRequest = (req, res, next) => {
 app.use(logRequest);
 
 //* authentication routes
-app.post("/login", authController.login);
+app.post("/login", loginLimiter, authController.login);
 app.post("/register", file_multi_upload, authController.register);
 app.post("/resetPassword", authController.resetPassword);
 app.put("/changePassword/:token", authController.setPassword);
@@ -129,13 +129,30 @@ app.use("/documents", express.static("public/uploads/"));
 //* stat routes
 app.get("/users/role/stat", verifyJWT, userController.userRolesStat);
 app.get("/users/lastFive/stat", verifyJWT, userController.getLastFiveUsers);
-app.get("/users/registration/stat", verifyJWT, userController.userRegistrationsOverTime);
-app.get("/transactions/profit/stat", verifyJWT, transactionController.getTransactions);
-app.get("/carAds/sponsorship/stat", verifyJWT, carAdController.carAdSponsorshipStat);
+app.get(
+  "/users/registration/stat",
+  verifyJWT,
+  userController.userRegistrationsOverTime
+);
+app.get(
+  "/transactions/profit/stat",
+  verifyJWT,
+  transactionController.getTransactions
+);
+app.get(
+  "/carAds/sponsorship/stat",
+  verifyJWT,
+  carAdController.carAdSponsorshipStat
+);
 
 //* user related routes:
 app.get("/getUserData/:id", userController.getUserData);
-app.put("/updateUserData/:id", verifyJWT, single_upload, userController.updateUserData);
+app.put(
+  "/updateUserData/:id",
+  verifyJWT,
+  single_upload,
+  userController.updateUserData
+);
 app.get("/getAllUsers", verifyJWT, userController.getAllUsers);
 app.get("/getUser/:id", userController.getUserById);
 
@@ -164,18 +181,20 @@ app.get("/carAdCache/:userId", carAdCacheController.getCarAdCache);
 
 //* transaction routes:
 app.get(
-  "/sponsorships/available/:userId", verifyJWT,
+  "/sponsorships/available/:userId",
+  verifyJWT,
   transactionController.getInactivatedSponsorships
 );
 app.get(
-  "/transactions/expert/:id", verifyJWT,
+  "/transactions/expert/:id",
+  verifyJWT,
   transactionController.getExpertCompletedTransactions
 );
 app.get(
-  "/transactions/:id", verifyJWT,
+  "/transactions/:id",
+  verifyJWT,
   transactionController.getClientCompletedTransactions
 );
-
 app.get("/transactions", verifyJWT, transactionController.getAllTransactions);
 
 //* Sponsorship routes:
@@ -192,7 +211,7 @@ app.delete(
 //* Experts routes:
 app.get("/experts", expertController.getApprovedExperts);
 app.get("/getPendingExperts", verifyJWT, userController.getPendingExperts);
-app.put("/approuverExpert/:id", verifyJWT, expertController.approuverExpert);
+app.put("/approuverExpert/:id", expertController.approuverExpert);
 app.put("/rejeterExpert/:id", verifyJWT, expertController.rejeterExpert);
 app.post(
   "/demandeExpert",
@@ -231,7 +250,7 @@ app.get("/contacts", verifyJWT, contactController.getContacts);
 
 //* admin routes:
 // app.post("/adminLogin", adminController.adminLogin);
-app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
+// app.put("/updateAdmin/:id", verifyJWT, adminController.updateAdminCredentials);
 app.put("/users/:id/block", verifyJWT, userController.blockUser);
 app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 
@@ -242,7 +261,7 @@ app.put("/users/:id/unblock", verifyJWT, userController.unblockUser);
 app.post("/init-payment", paymentController.payment);
 app.get("/konnect/webhook", paymentController.payment_update);
 
-//* vvv #####################_server related functions_##################### vvv
+//* ↓↓↓ #####################_server_related_functions_##################### ↓↓↓
 
 app.get("/", (req, res) => {
   res.send("Server is running");

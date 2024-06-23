@@ -54,7 +54,7 @@ const Expert = require("../Models/expert");
 // };
 
 // Définition de la fonction pour renvoyer les données de l'utilisateur
-let getUserData = async (req, res) => {
+const getUserData = async (req, res) => {
   try {
     const userId = req.params.id;
 
@@ -98,8 +98,6 @@ const updateUserData = async (req, res) => {
 
     const user = await User.findById(userId);
     console.log(req.body);
-    console.log(req.body);
-    console.log(req.body);
     if (!user) {
       return res.status(404).send("Utilisateur introuvable");
     }
@@ -115,6 +113,7 @@ const updateUserData = async (req, res) => {
         experience,
       });
     }
+
     // Check if old password is correct
     if (!(await bcrypt.compare(oldPassword, user.Password))) {
       return res.status(400).send("Le mot de passe est incorrect.");

@@ -9,7 +9,9 @@ const fs = require("fs");
 
 const createJob = async (req, res) => {
   try {
-    const { clientId, expertId, carId, jobDescription, paymentStatus } =
+    const subject = "Nouvelle demande d'expertise";
+
+    const { clientId, expertId,expertEmail, carId, jobDescription, paymentStatus } =
       req.body;
 
     // Create a new job instance
@@ -23,6 +25,21 @@ const createJob = async (req, res) => {
 
     // Save the job to the database
     await job.save();
+    const message = `Cher/chère Expert,
+
+Nous avons le plaisir de vous informer qu'une nouvelle demande d'expertise a été soumise. Nous vous invitons à vous rendre sur le site web pour plus de détails et pour décider si vous souhaitez l'accepter ou non.
+
+Cordialement,
+
+L'équipe de Flesk Car Sell`;
+
+    const variables = {
+      type: "general notification",
+      message: message,
+      Date: new Date(Date.now()).toLocaleDateString(),
+    };
+
+    await emailSender(expertEmail, subject, variables);
 
     res.status(201).json({ success: true, data: job });
   } catch (error) {
@@ -57,12 +74,10 @@ const getJobsByExpertId = async (req, res) => {
     const totalJobs = await Job.countDocuments({ expert: expertId });
 
     if (!jobs || jobs.length === 0) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Vous n'avez reçu aucune demande d'expertise",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Vous n'avez reçu aucune demande d'expertise",
+      });
     }
 
     res.status(200).json({

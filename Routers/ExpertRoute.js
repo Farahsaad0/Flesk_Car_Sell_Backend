@@ -105,26 +105,33 @@ let getApprovedExperts = async (req, res) => {
 //   }
 // };
 
-let approuverExpert = async (req, res) => {
+const approuverExpert = async (req, res) => {
   const subject = "mise à jour de votre demande d'expert";
-  const message = `Votre demande a été acceptée. Vous pouvez maintenant vous connecter et utiliser votre compte en tant qu'expert`;
- 
+
   try {
     const expert = await Expert.findByIdAndUpdate(
       req.params.id,
       { approuvé: true },
       { new: true }
-    ); 
+    );
     if (!expert) {
       return res.status(404).json({ message: "Expert non trouvé." });
     }
-    res.json(expert);
+    // res.json(expert);
 
     // Update the corresponding User's Statut to "Approuvé"
     const updatedExpert = await User.findOneAndUpdate(
       { ExpertId: req.params.id },
       { Statut: "Approuvé" }
     );
+
+    const message = `Bonjour ${updatedExpert.Prenom},
+
+Votre demande a été acceptée. Vous pouvez maintenant vous connecter et utiliser votre compte en tant qu'expert.
+
+Cordialement,
+
+L'équipe de Flesk Car Sell`;
 
     const variables = {
       type: "general notification",
@@ -145,10 +152,8 @@ let approuverExpert = async (req, res) => {
   }
 };
 
-let rejeterExpert = async (req, res) => {
+const rejeterExpert = async (req, res) => {
   const subject = "mise a jour de votre demand d'un compte expert";
-  const message =
-    "Nous tenons à vous informer que votre demande a été rejetée. Nous comprenons que cela puisse être décevant, mais nous vous encourageons à ne pas vous inquiéter. Vous pouvez toujours accéder à votre compte et l'utiliser comme tout autre utilisateur.";
 
   try {
     const expert = await Expert.findByIdAndUpdate(
@@ -159,13 +164,21 @@ let rejeterExpert = async (req, res) => {
     if (!expert) {
       return res.status(404).json({ message: "Expert non trouvé." });
     }
-    res.json(expert);
+    // res.json(expert);
 
     // Update the corresponding User's Statut to "Rejeté"
     const updatedExpert = await User.findOneAndUpdate(
       { ExpertId: req.params.id },
-      { Statut: "Rejeté" }
+      { Statut: "Rejeté", Role: "Utilisateur" }
     );
+
+    const message = `Bonjour ${updatedExpert.Prenom},
+
+Nous tenons à vous informer que votre demande a été rejetée. Nous comprenons que cela puisse être décevant, mais nous vous encourageons à ne pas vous inquiéter. Vous pouvez toujours accéder à votre compte et l'utiliser comme tout autre utilisateur.
+
+Cordialement,
+
+L'équipe de Flesk Car Sell`;
 
     const variables = {
       type: "general notification",
@@ -296,12 +309,12 @@ const demandeExpertRole = async (req, res) => {
         .status(400)
         .json({ message: "la document de confiance est obligatoire" });
     }
-console.log(req.files)
-console.log(req.files)
-console.log(req.files)
-console.log(req.files)
-console.log(req.files)
-    const documentDeConfiance = req.files.map(file => file.filename);
+    console.log(req.files);
+    console.log(req.files);
+    console.log(req.files);
+    console.log(req.files);
+    console.log(req.files);
+    const documentDeConfiance = req.files.map((file) => file.filename);
     // Créer un nouveau document d'expert avec les informations supplémentaires
     const newExpert = new Expert({
       specialite: specialite,

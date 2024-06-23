@@ -24,18 +24,18 @@ const getInactivatedSponsorships = async (req, res) => {
 
 const getMonthName = (monthIndex) => {
   const months = [
-    "Jan",
-    "Feb",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "Aug", 
-    "Sep",
+    "Janv",
+    "Févr",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juil",
+    "Août",
+    "Sept",
     "Oct",
     "Nov",
-    "Dec",
+    "Déc",
   ];
   return months[monthIndex];
 };
@@ -68,11 +68,11 @@ const getTransactions = async (req, res) => {
     const categories = Object.keys(aggregatedData);
     const series = [
       {
-        name: "Sponsorship",
+        name: "Pack de Sponsorship",
         data: categories.map((month) => aggregatedData[month].sponsorship),
       },
       {
-        name: "Expert Consultation",
+        name: "Consultation d'Expert",
         data: categories.map(
           (month) => aggregatedData[month].expertConsultation
         ),

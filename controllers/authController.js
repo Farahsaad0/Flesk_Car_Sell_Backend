@@ -23,7 +23,7 @@ const register = async (req, res) => {
     // Validate email address
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(Email)) {
-      return res.status(400).json({ message: "Invalid email address" });
+      return res.status(400).json({ message: " email adresse non valide" });
     }
 
     // Check if the user already exists
@@ -139,7 +139,7 @@ const login = async (req, res) => {
       console.log(`Blocked login attempt for user: ${foundUser.Nom}`);
       return res
         .status(403)
-        .json({ message: "Votre compte est en attent de l'acceptation de l'administrateur" }); 
+        .json({ message: "Votre compte est en attend de l'acceptation de l'administrateur" }); 
     }
 
     //* Generate JWT token
@@ -156,7 +156,6 @@ const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // const unverifiedUser = foundUser;
     if (foundUser.Verified === false) {
       const { Password, ...unverifiedUserDetails } = foundUser.toObject();
       res.status(200).json({ User: unverifiedUserDetails });
@@ -275,11 +274,18 @@ const resetPassword = async (req, res) => {
     // Send reset password link to the user's email
     const resetLink = `${process.env.FRONTEND_URL}/changePassword/${resetToken}`;
     const subject = "Lien de réinitialisation du mot de passe";
-    const message = `Hello ${user.Prenom},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you didn't request this, please ignore this email.`;
+    const message = `Bonjour ${user.Prenom},
+
+Veuillez cliquer sur le lien suivant pour réinitialiser votre mot de passe :
+
+${resetLink}
+
+
+Si vous n'avez pas demandé cela, veuillez ignorer cet email.`;
 
     const variables = {
-      type: "verification Code",
-      code_de_verification: resetLink,
+      type: "general notification",
+      message: message,
       Date: new Date(Date.now()).toLocaleDateString(),
     };
 
