@@ -23,7 +23,7 @@ const payment = async (req, res) => {
     recipient = receivedData.expertId;
     job = receivedData.jobId;
     type = receivedData.type;
-    redirectToOnSuccess = "https://46t60b15-3000.uks1.devtunnels.ms/demande";
+    redirectToOnSuccess = "https://46t60b15-3000.uks1.devtunnels.ms/demande"; 
   } else if (receivedData.type === "down payment") {
     console.log("first 2");
     amount = receivedData.amount;
@@ -157,7 +157,7 @@ const payment = async (req, res) => {
   }
 };
 
-const payment_update = async (req, res) => {
+const payment_update = async (req, res) => { //  c notre webhook 
   const paymentRef = req.query.payment_ref;
   try {
     const config = {

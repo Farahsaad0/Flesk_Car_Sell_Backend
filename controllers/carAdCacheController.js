@@ -32,7 +32,7 @@ const createCarAdCache = async (req, res) => {
 };
 
 // Read route
-const getCarAdCache = async (req, res) => {
+const getCarAdCache = async (req, res) => { // ^pour trouver les annonces encore enregistrées 
   try {
     const carAd = await CarAdCache.findOne({
       utilisateur: req.params.userId,

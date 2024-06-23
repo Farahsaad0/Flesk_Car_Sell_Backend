@@ -18,25 +18,25 @@ const register = async (req, res) => {
       Specialite,
       prix,
       experience,
-    } = req.body;
+    } = req.body;      // c le body de http request body qui arrive de front end 
 
     // Validate email address
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; //vérifier la forme de l'email
     if (!emailRegex.test(Email)) {
-      return res.status(400).json({ message: "Invalid email address" });
+      return res.status(400).json({ message: "Invalid email addres" });
     }
 
     // Check if the user already exists
     const existingUser = await User.findOne({ Email });
     if (existingUser) {
       return res.status(400).json({ message: "Utilisateur déjà existant!" });
-    }
+    } //verifier si l'utilisateur existe ou non avec cette email 
 
     // Validate password
     if (!Password || Password.length < 8) {
       return res.status(400).json({
         message: "Le mot de passe doit contenir au moins 8 caractères.",
-      });
+      }); 
     }
 
     // Check if ConfirmPassword matches Password
@@ -57,7 +57,7 @@ const register = async (req, res) => {
 
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
 
-    const hashedPassword = await bcrypt.hash(Password, 10);
+    const hashedPassword = await bcrypt.hash(Password, 10); // cryptage pour la sécurité 
 
     const newUser = new User({
       Nom,
@@ -71,7 +71,7 @@ const register = async (req, res) => {
       Statut: Role.toLowerCase() === "expert" ? "En attente" : "Approuvé",
     });
 
-    const subject = "Code de vérification pour votre inscription";
+    const subject = "Code de vérification pour votre inscription"; // sujet de l'email
 
     if (Role.toLowerCase() === "expert") {
       if (!req.files) {
@@ -80,7 +80,7 @@ const register = async (req, res) => {
           .json({ message: "la document de confiance est obligatoire" });
       }
 
-      const documentDeConfiance = req.files.map((file) => file.filename);
+      const documentDeConfiance = req.files.map((file) => file.filename); //telechargement cv 
       const newExpert = new ExpertProfile({
         specialite: Specialite,
         prix,
@@ -89,7 +89,7 @@ const register = async (req, res) => {
       });
 
       await newExpert.save();
-      newUser.ExpertId = newExpert._id;
+      newUser.ExpertId = newExpert._id; // bsh norbtou expert profile b document mta utilisateur hedheka aleh nhootou id 
     }
 
     await newUser.save();
@@ -99,7 +99,7 @@ const register = async (req, res) => {
       Date: new Date(Date.now()).toLocaleDateString(),
     };
     console.log(variables.type + " << from authController.");
-    await emailSender(newUser.Email, subject, variables);
+    await emailSender(newUser.Email, subject, variables); // variable bsh yetbaa3thou el send email 
 
     res
       .status(201)
@@ -122,7 +122,7 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "Utilisateur introuvable." });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, foundUser.Password);
+    const isPasswordValid = await bcrypt.compare(password, foundUser.Password); // va crypter le mot passe bsh y9arenha elli fl base de données 
 
     if (!isPasswordValid) {
       return res
@@ -139,7 +139,7 @@ const login = async (req, res) => {
       console.log(`Blocked login attempt for user: ${foundUser.Nom}`);
       return res
         .status(403)
-        .json({ message: "Votre compte est en attent de l'acceptation de l'administrateur" }); 
+        .json({ message: "Votre compte est en attend  de l'acceptation de l'administrateur" }); 
     }
 
     //* Generate JWT token
@@ -154,9 +154,9 @@ const login = async (req, res) => {
       { userId: foundUser._id, email: foundUser.Email, role: foundUser.Role },
       process.env.JWT_REF_PASS,
       { expiresIn: "1d" }
-    );
+    ); 
 
-    // const unverifiedUser = foundUser;
+   
     if (foundUser.Verified === false) {
       const { Password, ...unverifiedUserDetails } = foundUser.toObject();
       res.status(200).json({ User: unverifiedUserDetails });
@@ -190,12 +190,12 @@ const resendVerificationCode = async (req, res) => {
     const user = await User.findOne({ Email: email });
 
     if (!user) {
-      return res.status(400).json({ message: "cette compt n'existe pas." });
+      return res.status(400).json({ message: "ce compte n'existe pas." });
     }
     if (user.Verified !== false) {
       return res
         .status(400)
-        .json({ message: "cette email est deja verifier." });
+        .json({ message: "cette email est déjà vérifier." });
     }
 
     const verificationCode = Math.floor(100000 + Math.random() * 900000);
@@ -252,7 +252,7 @@ const verifyRouteHandler = async (req, res) => {
     });
   }
 };
-
+// mot passe oublier 
 const resetPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -273,7 +273,7 @@ const resetPassword = async (req, res) => {
     );
 
     // Send reset password link to the user's email
-    const resetLink = `${process.env.FRONTEND_URL}/changePassword/${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL}/changePassword/${resetToken}`; // reset token feha email utilisateur et date de validation 
     const subject = "Lien de réinitialisation du mot de passe";
     const message = `Hello ${user.Prenom},\n\nPlease click on the following link to reset your password:\n${resetLink}\n\nIf you didn't request this, please ignore this email.`;
 
@@ -322,7 +322,7 @@ const setPassword = async (req, res) => {
     console.log(token);
     console.log(token);
     // Decode the token to get the user ID
-    const decodedToken = jwt.verify(token, process.env.JWT_RESET_PASS_TOKEN);
+    const decodedToken = jwt.verify(token, process.env.JWT_RESET_PASS_TOKEN); // ba3d metousel token , il va le décoder pour prendre les informations pour voir quelle est le compte qu'on va changer son mot passe 
     const userId = decodedToken.userId;
 
     // Find the user by ID
